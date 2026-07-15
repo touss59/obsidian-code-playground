@@ -304,9 +304,7 @@ export class CodePlaygroundSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			// "CodeSandbox" is a brand name and keeps its capitalization.
-			// eslint-disable-next-line obsidianmd/ui/sentence-case
-			.setName("Show 'Open in CodeSandbox' button")
+			.setName("Show button to open in code sandbox")
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.showOpenInCodeSandbox)
