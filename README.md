@@ -48,13 +48,15 @@ Write this into any note:
 ```
 ````
 
-That's the minimum. When you save the note, the plugin assigns the block a stable `id` automatically so its edits can be persisted. From then on, edits inside the playground are saved to a sidecar file (see [Storage](#storage)).
+That's the minimum. As you type, the plugin automatically assigns each *empty* block a stable `id` (shortly after you create it) so its edits can be persisted. From then on, edits inside the playground are saved to a sidecar file (see [Storage](#storage)).
+
+If you paste or write a block that already has some JSON but no `id`, the automatic scan leaves it alone — run the **Assign missing block identifiers** command to fill those in.
 
 > The legacy `codePlayground` (camelCase) fence is still recognized, so existing notes keep working. New blocks use `code-playground`.
 
 ## Configuration reference
 
-The block body is JSON. Every field except `template` is optional and falls back to the plugin-wide default from the settings tab. `id` is required for persistence but is auto-injected on save if you leave it out.
+The block body is JSON. Both `id` and `template` are required — a block missing either one renders an inline error view instead of running. Every other field is optional and falls back to the plugin-wide default from the settings tab. You rarely write `id` by hand: an empty block gets one injected automatically as you type (see [Your first playground](#your-first-playground)).
 
 | Field                   | Type                              | Default (from settings) | Notes                                                                                                |
 | ----------------------- | --------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------- |
@@ -62,8 +64,8 @@ The block body is JSON. Every field except `template` is optional and falls back
 | `template`              | Sandpack template name            | `"react"`               | Any key from Sandpack's [`SANDBOX_TEMPLATES`](https://sandpack.codesandbox.io/docs/getting-started/usage#templates). |
 | `theme`                 | string                            | `"auto"`                | `"light"`, `"dark"`, `"auto"`, or any named theme from `@codesandbox/sandpack-themes`.                |
 | `borderColor`           | hex color (e.g. `"#D3D3D3"`)      | `"#D3D3D3"`             | Border around the playground container.                                                              |
-| `maxEditorHeight`       | positive integer (px)             | `400`                   | Maximum height of the editor panel.                                                                  |
-| `minEditorHeight`       | positive integer (px)             | `100`                   | Minimum height of the editor panel. Must be ≤ `maxEditorHeight`.                                     |
+| `maxEditorHeight`       | positive number (px)              | `400`                   | Maximum height of the editor panel.                                                                  |
+| `minEditorHeight`       | positive number (px)              | `100`                   | Minimum height of the editor panel. Must be ≤ `maxEditorHeight`.                                     |
 | `showEditor`            | boolean                           | `true`                  | Show the code editor pane.                                                                           |
 | `showPreview`           | boolean                           | `true`                  | Show the live preview pane.                                                                          |
 | `showConsole`           | boolean                           | `false`                 | Show the console pane below.                                                                         |
@@ -77,7 +79,7 @@ The block body is JSON. Every field except `template` is optional and falls back
 - At least one of `showEditor`, `showPreview`, `showConsole` must be `true`.
 - `minEditorHeight` must be ≤ `maxEditorHeight`.
 - Hex colors must match `#RGB` or `#RRGGBB` (case-insensitive).
-- Heights must be positive integers.
+- Heights must be positive numbers.
 
 ## Per-block overrides
 
@@ -124,9 +126,11 @@ Open **Settings → Code Playground** to set vault-wide defaults:
 
 ## Commands
 
-- **Assign missing block identifiers** — scans the active note and writes a fresh UUID into every `code-playground` block that doesn't already have an `id`. Runs automatically (debounced) while you type, but this command is the manual one-shot.
-- **Insert block** — inserts a ready-to-edit `code-playground` block at the cursor, pre-seeded with a fresh `id` and your default template.
-- **Remove unused sidecar files** — scans every Markdown and Canvas file in the vault for `code-playground` block ids, then deletes any sidecar in the playground folder whose id no longer appears anywhere. Shows a confirmation listing the exact files first; deletion follows your **Deleted files** preference (system trash / vault trash / permanent), so removed sidecars stay recoverable.
+Run these from Obsidian's **Command palette** (`Ctrl/Cmd + P`), where they appear prefixed with the plugin name, e.g. **Code Playground: Insert block**. You can also assign a hotkey to any of them in **Settings → Hotkeys** (search for "Code Playground").
+
+- **Assign missing block identifiers** — scans the active note and writes a fresh UUID into every `code-playground` block that doesn't already have an `id`, including blocks that already contain JSON. The automatic scan (debounced, while you type) only seeds *empty* blocks, so run this command whenever a block with existing JSON needs an id. *Requires an open note in editing mode.*
+- **Insert block** — inserts a ready-to-edit `code-playground` block at the cursor, pre-seeded with a fresh `id` and your default template. *Requires an open note in editing mode.*
+- **Remove unused sidecar files** — scans every Markdown and Canvas file in the vault for `code-playground` block ids, then deletes any sidecar in the playground folder whose id no longer appears anywhere. Shows a confirmation listing the exact files first; deletion follows your **Deleted files** preference (system trash / vault trash / permanent), so removed sidecars stay recoverable. Available anywhere (no note required).
 
 ## Storage
 
@@ -136,14 +140,15 @@ Each block's edits live in their own JSON file inside the vault:
 <vault>/<playgroundFolder>/<block-id>.json
 ```
 
-The folder defaults to `_playgrounds/`. The sidecar schema:
+The folder defaults to `_playgrounds/`. The sidecar schema (only `version` and `files` are always present; the rest are written as needed):
 
 ```json
 {
   "version": 1,
   "files": { "/App.js": "…", "/index.js": "…" },
   "activeFile": "/App.js",
-  "editorWidth": 480
+  "editorWidth": 480,
+  "hiddenFiles": ["/index.js"]
 }
 ```
 
@@ -165,9 +170,7 @@ Because the sidecars live in the vault, they sync wherever your vault syncs (Obs
 
 ```sh
 npm install
-npm run dev    # esbuild in watch mode
-npm run build  # type-check + production build (writes main.js)
-npm run lint
+npm run build
 ```
 
 Drop the built `main.js`, `manifest.json`, and `styles.css` into `<vault>/.obsidian/plugins/code-playground/` to test against a real vault.
