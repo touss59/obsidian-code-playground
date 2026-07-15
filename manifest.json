@@ -1,0 +1,10 @@
+{
+	"id": "code-playground",
+	"name": "Code Playground",
+	"version": "0.1.0",
+	"minAppVersion": "1.7.0",
+	"description": "Live, editable code playgrounds with instant preview inside your notes: HTML/CSS, React, Vue, Svelte, Angular, Solid, Next.js, TypeScript, JavaScript and more.",
+	"author": "touss59",
+	"authorUrl": "https://github.com/touss59",
+	"isDesktopOnly": false
+}
