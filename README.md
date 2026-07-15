@@ -2,7 +2,7 @@
 
 Embed live, editable [Sandpack](https://sandpack.codesandbox.io/) code playgrounds inside your Obsidian notes. Write a fenced block, get a working React (or Vue, Vanilla, Svelte, Angular…) sandbox that runs in-place.
 
-![Demo](docs/demoPlugin.gif)
+![Demo](https://raw.githubusercontent.com/touss59/obsidian-code-playground/main/docs/demoPlugin.gif)
 
 ## ⚠️ Network use & privacy — please read
 
