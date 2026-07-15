@@ -1,6 +1,6 @@
 {
 	"name": "code-playground",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Embed live code playgrounds in notes via Sandpack.",
 	"main": "main.js",
 	"type": "module",
