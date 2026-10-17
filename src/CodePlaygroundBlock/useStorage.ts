@@ -16,9 +16,7 @@ export function useStorage<K extends StorageField>(field: K) {
 
     const saveItem = useCallback(
         (value: PlaygroundSidecar[K]) => {
-            store.patch(id, { [field]: value } as Partial<
-                Omit<PlaygroundSidecar, "version">
-            >);
+            store.patch(id, { [field]: value });
         },
         [store, id, field],
     );

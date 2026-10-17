@@ -37,6 +37,8 @@ export class ConfirmModal extends Modal {
 			.addButton((btn) =>
 				btn
 					.setButtonText(confirmText)
+					// setDestructive() needs Obsidian 1.13.0, above our minAppVersion.
+					// eslint-disable-next-line @typescript-eslint/no-deprecated
 					.setWarning()
 					.onClick(() => {
 						this.close();

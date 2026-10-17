@@ -111,9 +111,7 @@ export class CodePlaygroundSettingTab extends PluginSettingTab {
 				dd.setValue(this.plugin.settings.template).onChange(
 					(value) => {
 						if (
-							!VALID_TEMPLATES.includes(
-								value as SandpackPredefinedTemplate,
-							)
+							!VALID_TEMPLATES.includes(value)
 						) {
 							new Notice(`Invalid template: ${value}`);
 							return;
