@@ -7,7 +7,12 @@ import {
 } from "obsidian";
 import CodePlayground from "main";
 import { SandpackPredefinedTemplate } from "@codesandbox/sandpack-react/types";
-import { VALID_TEMPLATES } from "config";
+import {
+	VALID_TEMPLATES,
+	VALID_LAYOUTS,
+	isPlaygroundLayout,
+	type PlaygroundLayout,
+} from "config";
 import { VALID_THEMES } from "themes";
 import { HEX_COLOR_RE, isHttpUrl, isSafeVaultFolder } from "validators";
 import { DEFAULT_PLAYGROUND_FOLDER } from "appConstants";
@@ -18,6 +23,7 @@ export interface CodePlaygroundSettings {
 	maxEditorHeight: number;
 	minEditorHeight: number;
 	theme: string;
+	layout: PlaygroundLayout;
 	showEditor: boolean;
 	showPreview: boolean;
 	showConsole: boolean;
@@ -35,6 +41,7 @@ export const DEFAULT_SETTINGS: CodePlaygroundSettings = {
 	maxEditorHeight: 400,
 	minEditorHeight: 100,
 	theme: "auto",
+	layout: "horizontal",
 	showEditor: true,
 	showPreview: true,
 	showConsole: false,
@@ -208,6 +215,27 @@ export class CodePlaygroundSettingTab extends PluginSettingTab {
 							return;
 						}
 						this.plugin.settings.theme = value;
+						void this.plugin.saveSettings();
+					},
+				);
+			});
+
+		new Setting(containerEl)
+			.setName("Default layout")
+			.setDesc(
+				"'horizontal' places the editor and preview side by side. 'vertical' stacks them so each spans the full width of the note; the preview then sizes to its content, within the editor height bounds.",
+			)
+			.addDropdown((dd) => {
+				VALID_LAYOUTS.forEach((l) => {
+					dd.addOption(l, l);
+				});
+				dd.setValue(this.plugin.settings.layout).onChange(
+					(value) => {
+						if (!isPlaygroundLayout(value)) {
+							new Notice(`Invalid layout: ${value}`);
+							return;
+						}
+						this.plugin.settings.layout = value;
 						void this.plugin.saveSettings();
 					},
 				);

@@ -20,7 +20,8 @@ If any of your playground content is sensitive, do not put it in a block, becaus
 
 - Live, in-note code editor + preview powered by Sandpack.
 - Supports every Sandpack template (`react`, `vanilla`, `vue`, `angular`, `svelte`, …).
-- Per-block JSON overrides for template, theme, panel visibility, sizing, colors.
+- Per-block JSON overrides for template, theme, layout, panel visibility, sizing, colors.
+- Side-by-side or stacked full-width panel layout, set vault-wide or per block.
 - Edits persist to per-block JSON sidecar files in your vault — they sync wherever the vault syncs.
 - Settings tab to set defaults once for every block in your vault.
 - Optional console panel and "Open in CodeSandbox" export button.
@@ -63,6 +64,7 @@ The block body is JSON. Both `id` and `template` are required — a block missin
 | `id`                    | string                            | auto-generated UUID     | Stable identifier used to look up the sidecar. Don't change after creation.                          |
 | `template`              | Sandpack template name            | `"react"`               | Any key from Sandpack's [`SANDBOX_TEMPLATES`](https://sandpack.codesandbox.io/docs/getting-started/usage#templates). |
 | `theme`                 | string                            | `"auto"`                | `"light"`, `"dark"`, `"auto"`, or any named theme from `@codesandbox/sandpack-themes`.                |
+| `layout`                | `"horizontal"` or `"vertical"`    | `"horizontal"`          | `horizontal` puts the editor and preview side by side. `vertical` stacks them so each spans the full note width; the preview then sizes to its content, capped by `maxEditorHeight`. |
 | `borderColor`           | hex color (e.g. `"#D3D3D3"`)      | `"#D3D3D3"`             | Border around the playground container.                                                              |
 | `maxEditorHeight`       | positive number (px)              | `400`                   | Maximum height of the editor panel.                                                                  |
 | `minEditorHeight`       | positive number (px)              | `100`                   | Minimum height of the editor panel. Must be ≤ `maxEditorHeight`.                                     |
@@ -118,6 +120,7 @@ Open **Settings → Code Playground** to set vault-wide defaults:
 - **Default border color** — hex color for the container border.
 - **Default max / min editor height** — pixel bounds for the editor panel.
 - **Default theme** — Sandpack theme name.
+- **Default layout** — `horizontal` (editor and preview side by side) or `vertical` (panels stacked, each spanning the full note width; the preview sizes to its content within the editor height bounds).
 - **Show editor / preview / console / file tabs** — default panel visibility.
 - **Button background / text color** — leave empty to use the Sandpack theme's defaults; set a hex value to override.
 - **Show 'Open in CodeSandbox' button** — adds an export button to every block.

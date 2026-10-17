@@ -15,6 +15,8 @@ import { useThrottle } from "CodePlaygroundBlock/useThrottle";
 import { useAppContext } from "CodePlaygroundBlock/AppContextProvider";
 import { useCodeSaver } from "CodePlaygroundBlock/useCodeSaver";
 import { useFilesVisibilityOn } from "CodePlaygroundBlock/useFilesVisibilityOn";
+import { usePreviewContentHeight } from "CodePlaygroundBlock/usePreviewContentHeight";
+import { stackedPaneHeight } from "CodePlaygroundBlock/stackedPaneHeight";
 import {
 	usePreviewLoadState,
 	type PreviewLoadState,
@@ -51,7 +53,11 @@ function SandpackContent({
 		showPreview,
 		showConsole: showConsoleButton,
 		showOpenInCodeSandbox,
+		layout,
+		minEditorHeight,
+		maxEditorHeight,
 	} = global.config;
+	const vertical = layout === "vertical";
 
 	const [showConsole, setShowConsole] = useState(
 		!showPreview && showConsoleButton,
@@ -73,7 +79,27 @@ function SandpackContent({
 	const overlayZindex = splitterSelected ? 100 : -1;
 
 	const hasRightPane = showPreview || showConsoleButton;
-	const effectiveEditorWidth = hasRightPane ? editorWidthInPX : -1;
+	const showResizer = !vertical && hasRightPane;
+	const effectiveEditorWidth = showResizer ? editorWidthInPX : -1;
+
+	const previewContentHeight = usePreviewContentHeight(showPreview);
+	const editorMinHeight =
+		!vertical && expanded && showPreview && !showConsole
+			? previewContentHeight
+			: 0;
+
+	const paneStyle = vertical
+		? {
+				flex: "none",
+				width: "100%",
+				height: `${stackedPaneHeight(
+					previewContentHeight,
+					minEditorHeight,
+					maxEditorHeight,
+					expanded,
+				)}px`,
+			}
+		: { flex: "1" };
 
 	const previewUnavailable =
 		previewLoadState !== "loaded" &&
@@ -81,16 +107,19 @@ function SandpackContent({
 
 	return (
 		<>
-			<SandpackLayout>
+			<SandpackLayout
+				className={vertical ? "cp-layout-vertical" : undefined}
+			>
 				{showEditor && (
 					<>
 						<SandpackEditorWrapper
 							editorWidthInPX={effectiveEditorWidth}
-							previewVisible={showPreview && !showConsole}
+							minHeightInPX={editorMinHeight}
+							vertical={vertical}
 							expanded={expanded}
 							onManageFiles={() => setShowManage(true)}
 						/>
-						{hasRightPane && (
+						{showResizer && (
 							<div
 								ref={resizerRef}
 								className="cp-resizer"
@@ -109,11 +138,7 @@ function SandpackContent({
 				)}
 
 				{showPreview && (
-					<div
-						style={
-							showConsole ? { display: "none" } : { flex: "1" }
-						}
-					>
+					<div style={showConsole ? { display: "none" } : paneStyle}>
 						<div
 							className="cp-preview-overlay"
 							style={{ zIndex: `${overlayZindex}` }}
@@ -148,9 +173,7 @@ function SandpackContent({
 				)}
 				{showConsoleButton && (
 					<SandpackConsole
-						style={
-							showConsole ? { flex: "1" } : { display: "none" }
-						}
+						style={showConsole ? paneStyle : { display: "none" }}
 						actionsChildren={
 							<div style={{ display: "flex", gap: "5px" }}>
 								<ExpandableButton

@@ -9,6 +9,7 @@ const OPTIONAL_CONFIG_KEYS = [
 	"maxEditorHeight",
 	"minEditorHeight",
 	"theme",
+	"layout",
 	"showEditor",
 	"showPreview",
 	"showConsole",
@@ -42,6 +43,17 @@ export type ResolvedCodePlaygroundConfig = Required<
 };
 
 export const VALID_TEMPLATES = Object.keys(SANDBOX_TEMPLATES);
+
+/** How a block's panes are arranged: side by side, or stacked full-width. */
+export const VALID_LAYOUTS = ["horizontal", "vertical"] as const;
+export type PlaygroundLayout = (typeof VALID_LAYOUTS)[number];
+
+export function isPlaygroundLayout(value: unknown): value is PlaygroundLayout {
+	return (
+		typeof value === "string" &&
+		(VALID_LAYOUTS as readonly string[]).includes(value)
+	);
+}
 
 export function isCodePlaygroundConfig(
 	source: unknown,
@@ -110,6 +122,10 @@ export function getConfigErrors(source: unknown): ConfigError[] {
 			!VALID_THEMES.includes(source.theme))
 	) {
 		errors.push("invalid_theme");
+	}
+
+	if ("layout" in source && !isPlaygroundLayout(source.layout)) {
+		errors.push("invalid_layout");
 	}
 
 	if ("showEditor" in source && typeof source.showEditor !== "boolean") {
@@ -195,6 +211,7 @@ export type KnownConfigError =
 	| "invalid_maxEditorHeight"
 	| "invalid_minEditorHeight"
 	| "invalid_theme"
+	| "invalid_layout"
 	| "invalid_showEditor"
 	| "invalid_showPreview"
 	| "invalid_showConsole"

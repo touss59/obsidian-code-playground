@@ -4,17 +4,18 @@ import { useAppContext } from "CodePlaygroundBlock/AppContextProvider";
 import { useEditorMaxHeight } from "CodePlaygroundBlock/useEditorMaxHeight";
 import { useDebounce } from "CodePlaygroundBlock/useDebounce";
 import { useStorage } from "CodePlaygroundBlock/useStorage";
-import { usePreviewContentHeight } from "CodePlaygroundBlock/usePreviewContentHeight";
 import { EDITOR_WIDTH_DEBOUNCE_MS } from "appConstants";
 
 export function SandpackEditorWrapper({
 	editorWidthInPX,
-	previewVisible,
+	minHeightInPX,
+	vertical,
 	expanded,
 	onManageFiles,
 }: {
 	editorWidthInPX: number;
-	previewVisible: boolean;
+	minHeightInPX: number;
+	vertical: boolean;
 	expanded: boolean;
 	onManageFiles: () => void;
 }) {
@@ -33,25 +34,22 @@ export function SandpackEditorWrapper({
 		editorRef,
 	);
 
-	const previewHeight = usePreviewContentHeight(previewVisible);
-
 	useSavedEditorWidth(editorWidthInPX);
 
 	const editorWidth =
 		editorWidthInPX === -1 ? "auto" : `${editorWidthInPX}px`;
 
-	return (
-		<div
-			ref={editorRef}
-			style={{
+	const wrapperStyle = vertical
+		? { flex: "none", width: "100%" }
+		: {
 				flex: editorWidth === "auto" ? "1" : "0",
 				minWidth: editorWidth === "auto" ? "0" : editorWidth,
 				minHeight:
-					expanded && previewHeight > 0
-						? `${previewHeight}px`
-						: undefined,
-			}}
-		>
+					minHeightInPX > 0 ? `${minHeightInPX}px` : undefined,
+			};
+
+	return (
+		<div ref={editorRef} style={wrapperStyle}>
 			<div className="cp-editor-wrap">
 				<SandpackCodeEditor
 					showTabs={global.config.showFileTabs}

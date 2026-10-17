@@ -225,3 +225,17 @@ div.sp-tab-container {
     right: 5px;
     z-index: 1;
 }
+
+/* Vertical layout: panes stack and each spans the full block width. Pane
+   heights are set inline by SandpackWrapper, since nothing stretches them. */
+.cp-root .cp-layout-vertical {
+    flex-direction: column;
+    flex-wrap: nowrap;
+}
+
+/* Sandpack floors the preview iframe at 160px; a content-sized pane shorter
+   than that would otherwise scroll. The iframe still fills the pane via
+   flex: 1. */
+.cp-root .cp-layout-vertical .sp-preview-iframe {
+    min-height: 0;
+}

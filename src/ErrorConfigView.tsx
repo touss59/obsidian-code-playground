@@ -15,6 +15,7 @@ const errorMessages: Record<KnownConfigError, string> = {
 	invalid_minEditorHeight: "Min editor height must be a positive integer",
 	invalid_theme:
 		"Theme must be 'light', 'dark', 'auto', or a named theme from @codesandbox/sandpack-themes",
+	invalid_layout: "layout must be 'horizontal' or 'vertical'",
 	invalid_showEditor: "showEditor must be a boolean (true or false)",
 	invalid_showPreview: "showPreview must be a boolean (true or false)",
 	invalid_showConsole: "showConsole must be a boolean (true or false)",
