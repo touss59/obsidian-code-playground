@@ -2,9 +2,9 @@ import { describe, it, expect } from "vitest";
 import { stackedPaneHeight } from "../CodePlaygroundBlock/stackedPaneHeight";
 
 describe("stackedPaneHeight", () => {
-	it("falls back to the cap while the content height is unknown", () => {
-		expect(stackedPaneHeight(0, 100, 400, false)).toBe(400);
-		expect(stackedPaneHeight(0, 100, 400, true)).toBe(400);
+	it("falls back to the min while the content height is unknown", () => {
+		expect(stackedPaneHeight(0, 100, 400, false)).toBe(100);
+		expect(stackedPaneHeight(0, 100, 400, true)).toBe(100);
 	});
 
 	it("sizes to content within the editor bounds", () => {

@@ -227,7 +227,7 @@ div.sp-tab-container {
 }
 
 /* Vertical layout: panes stack and each spans the full block width. Pane
-   heights are set inline by SandpackWrapper, since nothing stretches them. */
+   heights are set inline by usePaneSizing, since nothing stretches them. */
 .cp-root .cp-layout-vertical {
     flex-direction: column;
     flex-wrap: nowrap;

@@ -1,31 +1,19 @@
-import {
-	SandpackLayout,
-	SandpackPreview,
-	SandpackConsole,
-} from "@codesandbox/sandpack-react";
-import {
-	useCallback,
-	useEffect,
-	useRef,
-	useState,
-	type RefObject,
-} from "react";
-import { useStorage } from "CodePlaygroundBlock/useStorage";
-import { useThrottle } from "CodePlaygroundBlock/useThrottle";
+import { SandpackLayout } from "@codesandbox/sandpack-react";
+import { useState, type CSSProperties } from "react";
 import { useAppContext } from "CodePlaygroundBlock/AppContextProvider";
 import { useCodeSaver } from "CodePlaygroundBlock/useCodeSaver";
 import { useFilesVisibilityOn } from "CodePlaygroundBlock/useFilesVisibilityOn";
-import { usePreviewContentHeight } from "CodePlaygroundBlock/usePreviewContentHeight";
-import { stackedPaneHeight } from "CodePlaygroundBlock/stackedPaneHeight";
 import {
 	usePreviewLoadState,
 	type PreviewLoadState,
 } from "CodePlaygroundBlock/Sandpack/usePreviewLoadState";
-import { PreviewUnavailableBanner } from "CodePlaygroundBlock/Sandpack/PreviewUnavailableBanner";
 import { SandpackEditorWrapper } from "CodePlaygroundBlock/Sandpack/SandpackEditorWrapper";
-import { ManageFilesModal } from "CodePlaygroundBlock/ManageFilesModal";
-import { ExpandableButton } from "CodePlaygroundBlock/ExpandableButton";
-import { RESIZER_THROTTLE_MS } from "appConstants";
+import { useEditorColumnResize } from "CodePlaygroundBlock/Sandpack/useEditorColumnResize";
+import { PreviewPane } from "CodePlaygroundBlock/Sandpack/PreviewPane";
+import { ConsolePane } from "CodePlaygroundBlock/Sandpack/ConsolePane";
+import { usePaneSizing } from "CodePlaygroundBlock/Sandpack/usePaneSizing";
+
+const HIDDEN: CSSProperties = { display: "none" };
 
 export function SandpackWrapper() {
 	useCodeSaver();
@@ -48,202 +36,63 @@ function SandpackContent({
 	isOnline: boolean;
 }) {
 	const { value: global } = useAppContext();
-	const {
-		showEditor,
-		showPreview,
-		showConsole: showConsoleButton,
-		showOpenInCodeSandbox,
-		layout,
-		minEditorHeight,
-		maxEditorHeight,
-	} = global.config;
-	const vertical = layout === "vertical";
+	const { showEditor, showPreview, showConsole: showConsoleButton } =
+		global.config;
+	const vertical = global.config.layout === "vertical";
 
 	const [showConsole, setShowConsole] = useState(
 		!showPreview && showConsoleButton,
 	);
-	const [showManage, setShowManage] = useState(false);
 	const [expanded, setExpanded] = useState(false);
-	const { getItem } = useStorage("editorWidth");
-	const [editorWidthInPX, setEditorWidth] = useState(getItem() ?? -1);
-	const [splitterSelected, setSplitterSelected] = useState(false);
-	const stopResize = useCallback(() => setSplitterSelected(false), []);
-	const resizerRef = useRef<HTMLDivElement | null>(null);
-	useLeftColumnResizer(
-		splitterSelected,
-		stopResize,
-		setEditorWidth,
-		resizerRef,
-	);
-
-	const overlayZindex = splitterSelected ? 100 : -1;
-
-	const hasRightPane = showPreview || showConsoleButton;
-	const showResizer = !vertical && hasRightPane;
-	const effectiveEditorWidth = showResizer ? editorWidthInPX : -1;
-
-	const previewContentHeight = usePreviewContentHeight(showPreview);
-	const editorMinHeight =
-		!vertical && expanded && showPreview && !showConsole
-			? previewContentHeight
-			: 0;
-
-	const paneStyle = vertical
-		? {
-				flex: "none",
-				width: "100%",
-				height: `${stackedPaneHeight(
-					previewContentHeight,
-					minEditorHeight,
-					maxEditorHeight,
-					expanded,
-				)}px`,
-			}
-		: { flex: "1" };
-
-	const previewUnavailable =
-		previewLoadState !== "loaded" &&
-		(!isOnline || previewLoadState === "timedOut");
+	const resize = useEditorColumnResize();
+	const { editorMinHeight, paneStyle } = usePaneSizing({
+		expanded,
+		consoleShown: showConsole,
+	});
+	const showResizer = !vertical && (showPreview || showConsoleButton);
 
 	return (
-		<>
-			<SandpackLayout
-				className={vertical ? "cp-layout-vertical" : undefined}
-			>
-				{showEditor && (
-					<>
-						<SandpackEditorWrapper
-							editorWidthInPX={effectiveEditorWidth}
-							minHeightInPX={editorMinHeight}
-							vertical={vertical}
-							expanded={expanded}
-							onManageFiles={() => setShowManage(true)}
-						/>
-						{showResizer && (
-							<div
-								ref={resizerRef}
-								className="cp-resizer"
-								onPointerDown={(e) => {
-									// Capture the pointer so the drag keeps
-									// tracking even when it moves over the
-									// preview iframe or off the thin handle.
-									e.currentTarget.setPointerCapture(
-										e.pointerId,
-									);
-									setSplitterSelected(true);
-								}}
-							/>
-						)}
-					</>
-				)}
-
-				{showPreview && (
-					<div style={showConsole ? { display: "none" } : paneStyle}>
-						<div
-							className="cp-preview-overlay"
-							style={{ zIndex: `${overlayZindex}` }}
-						></div>
-						<div className="cp-preview-pane">
-							{previewUnavailable && (
-								<PreviewUnavailableBanner isOnline={isOnline} />
-							)}
-							<SandpackPreview
-								showOpenInCodeSandbox={showOpenInCodeSandbox}
-								className="cp-preview-content"
-								actionsChildren={
-									<div className="cp-actions-row">
-										<ExpandableButton
-											expanded={expanded}
-											setExpanded={setExpanded}
-										/>
-										{showConsoleButton && (
-											<button
-												onClick={() =>
-													setShowConsole(true)
-												}
-											>
-												Show console
-											</button>
-										)}
-									</div>
-								}
-							/>
-						</div>
-					</div>
-				)}
-				{showConsoleButton && (
-					<SandpackConsole
-						style={showConsole ? paneStyle : { display: "none" }}
-						actionsChildren={
-							<div style={{ display: "flex", gap: "5px" }}>
-								<ExpandableButton
-									expanded={expanded}
-									setExpanded={setExpanded}
-								/>
-								{showPreview && (
-									<button
-										onClick={() => setShowConsole(false)}
-									>
-										Show preview
-									</button>
-								)}
-							</div>
-						}
+		<SandpackLayout className={vertical ? "cp-layout-vertical" : undefined}>
+			{showEditor && (
+				<>
+					<SandpackEditorWrapper
+						editorWidth={showResizer ? resize.editorWidth : "auto"}
+						minHeightInPX={editorMinHeight}
+						vertical={vertical}
+						expanded={expanded}
 					/>
-				)}
-			</SandpackLayout>
-			<ManageFilesModal
-				open={showManage}
-				onClose={() => setShowManage(false)}
-			/>
-		</>
+					{showResizer && (
+						<div
+							ref={resize.resizerRef}
+							className="cp-resizer"
+							onPointerDown={resize.startResize}
+						/>
+					)}
+				</>
+			)}
+			{showPreview && (
+				<PreviewPane
+					style={showConsole ? HIDDEN : paneStyle}
+					resizing={resize.dragging}
+					previewLoadState={previewLoadState}
+					isOnline={isOnline}
+					expanded={expanded}
+					setExpanded={setExpanded}
+					onShowConsole={
+						showConsoleButton ? () => setShowConsole(true) : undefined
+					}
+				/>
+			)}
+			{showConsoleButton && (
+				<ConsolePane
+					style={showConsole ? paneStyle : HIDDEN}
+					expanded={expanded}
+					setExpanded={setExpanded}
+					onShowPreview={
+						showPreview ? () => setShowConsole(false) : undefined
+					}
+				/>
+			)}
+		</SandpackLayout>
 	);
-}
-
-function useLeftColumnResizer(
-	canBeResized: boolean,
-	stopResize: () => unknown,
-	setEditorWidth: (newWidth: number) => unknown,
-	resizerRef: RefObject<HTMLDivElement | null>,
-) {
-	const throttledSetEditorWidth = useThrottle(setEditorWidth, RESIZER_THROTTLE_MS); // ~60fps
-
-	// Ref mirrors so the listener effect only re-runs when a drag starts or
-	// ends, not on every render.
-	const throttledRef = useRef(throttledSetEditorWidth);
-	throttledRef.current = throttledSetEditorWidth;
-	const stopResizeRef = useRef(stopResize);
-	stopResizeRef.current = stopResize;
-
-	useEffect(() => {
-		if (!canBeResized) return;
-
-		const onPointerUp = () => {
-			stopResizeRef.current();
-		};
-
-		const onPointerMove = (e: PointerEvent) => {
-			// Ignore secondary pointers (a second finger) mid-drag.
-			if (!e.isPrimary) return;
-			const resizer = resizerRef.current;
-			if (!resizer?.parentElement) return;
-			const containerRect = resizer.parentElement.getBoundingClientRect();
-			const newLeftWidth = e.clientX - containerRect.left;
-			if (newLeftWidth < 0) return;
-			throttledRef.current(newLeftWidth);
-		};
-
-		// Pointer events unify mouse/touch/pen; combined with setPointerCapture
-		// on the handle (see onPointerDown) the drag keeps tracking over the
-		// preview iframe. Captured events still bubble to window.
-		window.addEventListener("pointermove", onPointerMove);
-		window.addEventListener("pointerup", onPointerUp);
-		window.addEventListener("pointercancel", onPointerUp);
-
-		return () => {
-			window.removeEventListener("pointermove", onPointerMove);
-			window.removeEventListener("pointerup", onPointerUp);
-			window.removeEventListener("pointercancel", onPointerUp);
-		};
-	}, [canBeResized]);
 }

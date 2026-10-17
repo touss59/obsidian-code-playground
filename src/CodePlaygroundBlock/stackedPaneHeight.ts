@@ -7,8 +7,8 @@
  * cap, mirroring how "Show more" lets the editor grow past its max.
  *
  * A content height of 0 means the bundler hasn't reported yet (or never
- * will, e.g. an offline preview); fall back to the cap so the pane stays
- * usable rather than collapsing to the minimum.
+ * will, e.g. an offline preview); fall back to the min so the pane grows to
+ * fit the content instead of showing a tall empty pane that then shrinks.
  */
 export function stackedPaneHeight(
 	contentHeight: number,
@@ -18,8 +18,10 @@ export function stackedPaneHeight(
 ): number {
 	// Merged configs can end up with min > max (block max below the vault
 	// min); resolve it the same way the editor clamp does.
-	const cap = Math.max(maxEditorHeight, minEditorHeight);
-	if (contentHeight <= 0) return cap;
-	const floored = Math.max(contentHeight, minEditorHeight);
-	return expanded ? floored : Math.min(floored, cap);
+	const heightMaxFromSettings = Math.max(maxEditorHeight, minEditorHeight);
+	if (contentHeight <= 0) return minEditorHeight;
+	const minHeightNeeded = Math.max(contentHeight, minEditorHeight);
+	return expanded
+		? minHeightNeeded
+		: Math.min(minHeightNeeded, heightMaxFromSettings);
 }

@@ -4,22 +4,23 @@ import { useAppContext } from "CodePlaygroundBlock/AppContextProvider";
 import { useEditorMaxHeight } from "CodePlaygroundBlock/useEditorMaxHeight";
 import { useDebounce } from "CodePlaygroundBlock/useDebounce";
 import { useStorage } from "CodePlaygroundBlock/useStorage";
+import { ManageFilesModal } from "CodePlaygroundBlock/ManageFilesModal";
+import type { EditorWidth } from "CodePlaygroundBlock/Sandpack/useEditorColumnResize";
 import { EDITOR_WIDTH_DEBOUNCE_MS } from "appConstants";
 
 export function SandpackEditorWrapper({
-	editorWidthInPX,
+	editorWidth,
 	minHeightInPX,
 	vertical,
 	expanded,
-	onManageFiles,
 }: {
-	editorWidthInPX: number;
+	editorWidth: EditorWidth;
 	minHeightInPX: number;
 	vertical: boolean;
 	expanded: boolean;
-	onManageFiles: () => void;
 }) {
 	const { value: global } = useAppContext();
+	const [showManage, setShowManage] = useState(false);
 	const editorRef = useRef<HTMLDivElement | null>(null);
 	const minEditorHeight = global.config.minEditorHeight;
 	const maxEditorHeight = global.config.maxEditorHeight;
@@ -34,16 +35,16 @@ export function SandpackEditorWrapper({
 		editorRef,
 	);
 
-	useSavedEditorWidth(editorWidthInPX);
+	useSavedEditorWidth(editorWidth);
 
-	const editorWidth =
-		editorWidthInPX === -1 ? "auto" : `${editorWidthInPX}px`;
+	const auto = editorWidth === "auto";
+	const cssWidth = auto ? "auto" : `${editorWidth}px`;
 
 	const wrapperStyle = vertical
 		? { flex: "none", width: "100%" }
 		: {
-				flex: editorWidth === "auto" ? "1" : "0",
-				minWidth: editorWidth === "auto" ? "0" : editorWidth,
+				flex: auto ? "1" : "0",
+				minWidth: auto ? "0" : cssWidth,
 				minHeight:
 					minHeightInPX > 0 ? `${minHeightInPX}px` : undefined,
 			};
@@ -57,25 +58,31 @@ export function SandpackEditorWrapper({
 					style={{
 						height: editorHeight,
 						minHeight: `${minEditorHeight}px`,
-						width: editorWidth,
+						width: cssWidth,
 					}}
 				/>
 				<div className="cp-manage-files-button">
-					<button onClick={onManageFiles}>Manage files</button>
+					<button onClick={() => setShowManage(true)}>
+						Manage files
+					</button>
 				</div>
 			</div>
+			<ManageFilesModal
+				open={showManage}
+				onClose={() => setShowManage(false)}
+			/>
 		</div>
 	);
 }
 
-function useSavedEditorWidth(currentEditorWidth: number) {
+function useSavedEditorWidth(currentEditorWidth: EditorWidth) {
 	const { value: global } = useAppContext();
 	const { saveItem } = useStorage("editorWidth");
 	const debouncedSaveItem = useDebounce(saveItem, EDITOR_WIDTH_DEBOUNCE_MS);
 	useEffect(() => {
 		if (
 			!global.hasBeenCorrectlyLoaded ||
-			!currentEditorWidth ||
+			currentEditorWidth === "auto" ||
 			currentEditorWidth <= 0
 		) {
 			return;
