@@ -9,8 +9,14 @@ export type PlaygroundSidecar = {
 	files: SandpackBundlerFiles;
 	activeFile?: string;
 	editorWidth?: number;
+	/** Dragged panel heights; absent means sized to content. */
+	rowHeight?: number;
+	editorHeight?: number;
+	paneHeight?: number;
 	hiddenFiles?: string[];
 };
+
+const HEIGHT_FIELDS = ["rowHeight", "editorHeight", "paneHeight"] as const;
 
 /**
  * Thrown when a sidecar file exists on disk but cannot be read, parsed, or
@@ -62,6 +68,11 @@ function isValidSidecar(v: unknown): v is PlaygroundSidecar {
 	}
 	if (v.editorWidth !== undefined && typeof v.editorWidth !== "number") {
 		return false;
+	}
+	for (const field of HEIGHT_FIELDS) {
+		if (v[field] !== undefined && typeof v[field] !== "number") {
+			return false;
+		}
 	}
 	if (v.hiddenFiles !== undefined) {
 		if (!Array.isArray(v.hiddenFiles)) return false;
@@ -175,6 +186,9 @@ export class SidecarStore {
 			version: 1,
 			activeFile: prev?.activeFile,
 			editorWidth: prev?.editorWidth,
+			rowHeight: prev?.rowHeight,
+			editorHeight: prev?.editorHeight,
+			paneHeight: prev?.paneHeight,
 			hiddenFiles: prev?.hiddenFiles,
 			...update,
 			files: update.files ?? prev?.files ?? {},

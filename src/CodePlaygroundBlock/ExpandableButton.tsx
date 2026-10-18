@@ -6,20 +6,12 @@ export function ExpandableButton({
 	setExpanded: (value: boolean) => unknown;
 }) {
 	return !expanded ? (
-		<button
-			className="expandableButton"
-			aria-label="Show more"
-			onClick={() => setExpanded(true)}
-		>
-			▾
+		<button className="expandableButton" onClick={() => setExpanded(true)}>
+			▾ Show more
 		</button>
 	) : (
-		<button
-			className="expandableButton"
-			aria-label="Show less"
-			onClick={() => setExpanded(false)}
-		>
-			▴
+		<button className="expandableButton" onClick={() => setExpanded(false)}>
+			▴ Show less
 		</button>
 	);
 }

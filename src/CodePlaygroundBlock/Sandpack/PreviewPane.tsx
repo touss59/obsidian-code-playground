@@ -1,25 +1,23 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, RefObject } from "react";
 import { SandpackPreview } from "@codesandbox/sandpack-react";
 import { useAppContext } from "CodePlaygroundBlock/AppContextProvider";
-import { ExpandableButton } from "CodePlaygroundBlock/ExpandableButton";
+import { OpenInCodeSandboxButton } from "CodePlaygroundBlock/Sandpack/OpenInCodeSandboxButton";
 import { PreviewUnavailableBanner } from "CodePlaygroundBlock/Sandpack/PreviewUnavailableBanner";
 import type { PreviewLoadState } from "CodePlaygroundBlock/Sandpack/usePreviewLoadState";
 
 export function PreviewPane({
+	containerRef,
 	style,
 	resizing,
 	previewLoadState,
 	isOnline,
-	expanded,
-	setExpanded,
 	onShowConsole,
 }: {
+	containerRef: RefObject<HTMLDivElement>;
 	style: CSSProperties;
 	resizing: boolean;
 	previewLoadState: PreviewLoadState;
 	isOnline: boolean;
-	expanded: boolean;
-	setExpanded: (value: boolean) => unknown;
 	/** Omitted when the console button is disabled. */
 	onShowConsole?: () => void;
 }) {
@@ -29,7 +27,7 @@ export function PreviewPane({
 		(!isOnline || previewLoadState === "timedOut");
 
 	return (
-		<div style={style}>
+		<div ref={containerRef} style={style}>
 			<div
 				className="cp-preview-overlay"
 				style={{ zIndex: `${resizing ? 100 : -1}` }}
@@ -37,20 +35,17 @@ export function PreviewPane({
 			<div className="cp-preview-pane">
 				{unavailable && <PreviewUnavailableBanner isOnline={isOnline} />}
 				<SandpackPreview
-					showOpenInCodeSandbox={global.config.showOpenInCodeSandbox}
+					showOpenInCodeSandbox={false}
 					className="cp-preview-content"
 					actionsChildren={
-						<div className="cp-actions-row">
-							<ExpandableButton
-								expanded={expanded}
-								setExpanded={setExpanded}
-							/>
-							{onShowConsole && (
-								<button onClick={onShowConsole}>
-									Show console
-								</button>
+						<>
+							{global.config.showOpenInCodeSandbox && (
+								<OpenInCodeSandboxButton />
 							)}
-						</div>
+							{onShowConsole && (
+								<button onClick={onShowConsole}>Show console</button>
+							)}
+						</>
 					}
 				/>
 			</div>

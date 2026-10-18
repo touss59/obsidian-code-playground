@@ -64,7 +64,7 @@ The block body is JSON. Both `id` and `template` are required — a block missin
 | `id`                    | string                            | auto-generated UUID     | Stable identifier used to look up the sidecar. Don't change after creation.                          |
 | `template`              | Sandpack template name            | `"react"`               | Any key from Sandpack's [`SANDBOX_TEMPLATES`](https://sandpack.codesandbox.io/docs/getting-started/usage#templates). |
 | `theme`                 | string                            | `"auto"`                | `"light"`, `"dark"`, `"auto"`, or any named theme from `@codesandbox/sandpack-themes`.                |
-| `layout`                | `"horizontal"` or `"vertical"`    | `"horizontal"`          | `horizontal` puts the editor and preview side by side. `vertical` stacks them so each spans the full note width; the preview then sizes to its content, between `minEditorHeight` and `maxEditorHeight` (Expand removes the max). |
+| `layout`                | `"horizontal"` or `"vertical"`    | `"horizontal"`          | `horizontal` puts the editor and preview side by side. `vertical` stacks them so each spans the full note width. See [Panel heights](#panel-heights). |
 | `borderColor`           | hex color (e.g. `"#D3D3D3"`)      | `"#D3D3D3"`             | Border around the playground container.                                                              |
 | `maxEditorHeight`       | positive number (px)              | `400`                   | Maximum height of the editor panel. In the `vertical` layout, also limits the preview/console pane. |
 | `minEditorHeight`       | positive number (px)              | `100`                   | Minimum height of the editor panel. Must be ≤ `maxEditorHeight`. In the `vertical` layout, also limits the preview/console pane. |
@@ -82,6 +82,21 @@ The block body is JSON. Both `id` and `template` are required — a block missin
 - `minEditorHeight` must be ≤ `maxEditorHeight`.
 - Hex colors must match `#RGB` or `#RRGGBB` (case-insensitive).
 - Heights must be positive numbers.
+
+## Panel heights
+
+Panels size to their content, between `minEditorHeight` and `maxEditorHeight`:
+
+- **Side by side:** the editor and preview share one row. The row fits the taller of the code and the preview content.
+- **Stacked:** the editor fits its code, and the preview fits its content.
+
+To change a height:
+
+- **Show more** (under the block) removes the max, so all of the content shows. The button appears only when the max cuts off some code or preview content. It is not saved: the next time the note opens, the block is collapsed again.
+- **Drag** the handle under a panel to set its height. Side by side, one handle under the row sets both panels. Stacked, each panel has its own handle. The height is saved with the block. It cannot go below `minEditorHeight`, but it can go above `maxEditorHeight`. A dragged panel keeps its height: **Show more** ignores it.
+- **Double-click** the handle to remove the dragged height. The panel then sizes to its content again.
+
+Content that fills its viewport (for example `height: 100vh`) has no height of its own. Its preview stays at `minEditorHeight` until you drag it.
 
 ## Per-block overrides
 
@@ -120,7 +135,7 @@ Open **Settings → Code Playground** to set vault-wide defaults:
 - **Default border color** — hex color for the container border.
 - **Default max / min editor height** — pixel bounds for the editor panel.
 - **Default theme** — Sandpack theme name.
-- **Default layout** — `horizontal` (editor and preview side by side) or `vertical` (panels stacked, each spanning the full note width; the preview sizes to its content within the editor height bounds).
+- **Default layout** — `horizontal` (editor and preview side by side) or `vertical` (panels stacked, each spanning the full note width). See [Panel heights](#panel-heights).
 - **Show editor / preview / console / file tabs** — default panel visibility.
 - **Button background / text color** — leave empty to use the Sandpack theme's defaults; set a hex value to override.
 - **Show 'Open in CodeSandbox' button** — adds an export button to every block.

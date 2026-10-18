@@ -136,6 +136,20 @@ describe("SidecarStore load", () => {
 		);
 	});
 
+	it("throws SidecarLoadError for a non-numeric panel height", async () => {
+		const { app } = makeVault({
+			[path("abc")]: JSON.stringify({
+				version: 1,
+				files: {},
+				rowHeight: "300",
+			}),
+		});
+		const store = new SidecarStore(app, FOLDER);
+		await expect(store.load("abc")).rejects.toBeInstanceOf(
+			SidecarLoadError,
+		);
+	});
+
 	it("throws SidecarLoadError when the file exists on disk but is not indexed yet", async () => {
 		const { app, handles } = makeVault({
 			[path("abc")]: sidecarJson("synced"),
@@ -187,6 +201,20 @@ describe("SidecarStore writes", () => {
 		expect(vault.create).toHaveBeenCalledTimes(1);
 		expect(vault.process).toHaveBeenCalledTimes(1);
 		expect(codeOnDisk(contents, "abc")).toBe("new");
+	});
+
+	it("keeps panel heights across patches and clears one set to undefined", async () => {
+		const { app } = makeVault();
+		const store = new SidecarStore(app, FOLDER);
+		store.patch("abc", { rowHeight: 300, paneHeight: 500 });
+		store.patch("abc", { files: filesOf("data") });
+		expect(store.get("abc")?.rowHeight).toBe(300);
+		expect(store.get("abc")?.paneHeight).toBe(500);
+
+		store.patch("abc", { rowHeight: undefined });
+		expect(store.get("abc")?.rowHeight).toBeUndefined();
+		expect(store.get("abc")?.paneHeight).toBe(500);
+		await flushWrites();
 	});
 
 	it("drops a stale handle and recreates the file", async () => {

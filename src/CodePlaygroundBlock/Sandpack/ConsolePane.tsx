@@ -1,33 +1,26 @@
 import type { CSSProperties } from "react";
 import { SandpackConsole } from "@codesandbox/sandpack-react";
-import { ExpandableButton } from "CodePlaygroundBlock/ExpandableButton";
 
 export function ConsolePane({
 	style,
-	expanded,
-	setExpanded,
 	onShowPreview,
 }: {
 	style: CSSProperties;
-	expanded: boolean;
-	setExpanded: (value: boolean) => unknown;
 	/** Omitted when the preview is disabled. */
 	onShowPreview?: () => void;
 }) {
+	// The wrapper takes the pane size. A console placed directly in the
+	// layout gets Sandpack's fixed 300px height instead.
 	return (
-		<SandpackConsole
-			style={style}
-			actionsChildren={
-				<div style={{ display: "flex", gap: "5px" }}>
-					<ExpandableButton
-						expanded={expanded}
-						setExpanded={setExpanded}
-					/>
-					{onShowPreview && (
+		<div className="cp-console-pane" style={style}>
+			<SandpackConsole
+				className="cp-console-content"
+				actionsChildren={
+					onShowPreview && (
 						<button onClick={onShowPreview}>Show preview</button>
-					)}
-				</div>
-			}
-		/>
+					)
+				}
+			/>
+		</div>
 	);
 }

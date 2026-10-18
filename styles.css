@@ -88,6 +88,35 @@ div.sp-tab-container {
     right: -8px;
 }
 
+/* Panel height handle, below the editor/preview row (horizontal) or below
+   each stacked panel (vertical). Shows only on hover so it doesn't double
+   the layout border. */
+.cp-height-resizer {
+    flex: none;
+    width: 100%;
+    height: 2px;
+    background: transparent;
+    cursor: ns-resize;
+    position: relative;
+    z-index: 3;
+    touch-action: none;
+}
+
+.cp-height-resizer:hover,
+.cp-height-resizer:active {
+    background: var(--cp-border, var(--background-modifier-border));
+}
+
+/* Widen the touch/click target without affecting the 2px layout height */
+.cp-height-resizer::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -6px;
+    bottom: -6px;
+}
+
 /* Transparent overlay that captures pointer events while resizing */
 .cp-preview-overlay {
     width: 100%;
@@ -201,10 +230,14 @@ div.sp-tab-container {
     font-size: smaller;
 }
 
-/* Preview/console action button rows */
-.cp-actions-row {
+/* Block-level actions under the panels (the expand button). Sits above the
+   widened hit strip of the height handle right above it. */
+.cp-block-actions {
     display: flex;
-    gap: 5px;
+    justify-content: center;
+    margin-top: 4px;
+    position: relative;
+    z-index: 4;
 }
 
 /* SandpackPreview root — scoped under .cp-root so it beats Sandpack's own
@@ -214,9 +247,25 @@ div.sp-tab-container {
     height: 100%;
 }
 
-/* Positioning context for the absolutely-placed "Manage files" button */
+/* Console pane. The console fills its wrapper out of the flow, so long logs
+   scroll inside the pane instead of growing the editor/preview row. */
+.cp-console-pane {
+    position: relative;
+}
+
+.cp-root .cp-console-content {
+    position: absolute;
+    inset: 0;
+}
+
+/* Positioning context for the absolutely-placed "Manage files" button. Also
+   passes the editor box height down so the editor can fill it. */
 .cp-editor-wrap {
     position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
 .cp-manage-files-button {
@@ -227,15 +276,16 @@ div.sp-tab-container {
 }
 
 /* Vertical layout: panes stack and each spans the full block width. Pane
-   heights are set inline by usePaneSizing, since nothing stretches them. */
+   heights are set inline (see computeBlockSizes), since nothing stretches
+   them. */
 .cp-root .cp-layout-vertical {
     flex-direction: column;
     flex-wrap: nowrap;
 }
 
-/* Sandpack floors the preview iframe at 160px; a content-sized pane shorter
-   than that would otherwise scroll. The iframe still fills the pane via
-   flex: 1. */
-.cp-root .cp-layout-vertical .sp-preview-iframe {
+/* Sandpack floors the preview iframe at 160px; a content-sized or dragged
+   pane shorter than that would otherwise scroll or stretch the row. The
+   iframe still fills the pane via flex: 1. */
+.cp-root .sp-preview-iframe {
     min-height: 0;
 }

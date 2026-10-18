@@ -16,14 +16,23 @@ export const SAVE_FILES_DEBOUNCE_MS = 1000;
 /** Debounce window before persisting the hidden-files set. */
 export const HIDDEN_FILES_DEBOUNCE_MS = 1000;
 
-/** Debounce window before persisting the editor column width. */
-export const EDITOR_WIDTH_DEBOUNCE_MS = 300;
+/** Debounce window before persisting a dragged column width or panel height. */
+export const DRAGGED_SIZE_DEBOUNCE_MS = 300;
 
 /** Throttle interval for the resizer drag handler (~60fps). */
 export const RESIZER_THROTTLE_MS = 16;
 
 /** Debounce window for the editor-change id scan. */
 export const ID_SCAN_DEBOUNCE_MS = 500;
+
+// --- Layout ---------------------------------------------------------------
+
+/**
+ * Extra px added to the preview content height reported by the bundler. The
+ * reported document height leaves no room for a horizontal scrollbar or
+ * late layout shifts, so content sized to it exactly gets clipped.
+ */
+export const PREVIEW_HEIGHT_EXTRA_PX = 20;
 
 // --- Storage --------------------------------------------------------------
 

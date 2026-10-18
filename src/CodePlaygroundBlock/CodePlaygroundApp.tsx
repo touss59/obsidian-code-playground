@@ -9,6 +9,7 @@ import {
 	useAppContext,
 } from "CodePlaygroundBlock/AppContextProvider";
 import { SandpackWrapper } from "CodePlaygroundBlock/Sandpack/SandpackWrapper";
+import { STATIC_RESIZE_REPORTER_URL } from "CodePlaygroundBlock/Sandpack/staticResizeReporter";
 import { useStorage } from "CodePlaygroundBlock/useStorage";
 import { PlaygroundErrorBoundary } from "CodePlaygroundBlock/ErrorBoundary";
 import { SidecarStore } from "storage/SidecarStore";
@@ -114,6 +115,9 @@ function AppContent() {
 						initMode: "user-visible",
 						...(global.config.bundlerURL
 							? { bundlerURL: global.config.bundlerURL }
+							: {}),
+						...(global.config.template === "static"
+							? { externalResources: [STATIC_RESIZE_REPORTER_URL] }
 							: {}),
 					}}
 				>

@@ -1,63 +1,48 @@
 import { SandpackCodeEditor } from "@codesandbox/sandpack-react";
-import { useEffect, useRef, useState } from "react";
+import { useState, type CSSProperties, type RefObject } from "react";
 import { useAppContext } from "CodePlaygroundBlock/AppContextProvider";
-import { useEditorMaxHeight } from "CodePlaygroundBlock/useEditorMaxHeight";
-import { useDebounce } from "CodePlaygroundBlock/useDebounce";
-import { useStorage } from "CodePlaygroundBlock/useStorage";
 import { ManageFilesModal } from "CodePlaygroundBlock/ManageFilesModal";
+import type { BlockSizes } from "CodePlaygroundBlock/blockSizes";
 import type { EditorWidth } from "CodePlaygroundBlock/Sandpack/useEditorColumnResize";
-import { EDITOR_WIDTH_DEBOUNCE_MS } from "appConstants";
 
 export function SandpackEditorWrapper({
+	boxRef,
 	editorWidth,
-	minHeightInPX,
+	sizes,
 	vertical,
-	expanded,
 }: {
+	boxRef: RefObject<HTMLDivElement>;
 	editorWidth: EditorWidth;
-	minHeightInPX: number;
+	sizes: Pick<BlockSizes, "editorBox" | "editor">;
 	vertical: boolean;
-	expanded: boolean;
 }) {
 	const { value: global } = useAppContext();
 	const [showManage, setShowManage] = useState(false);
-	const editorRef = useRef<HTMLDivElement | null>(null);
-	const minEditorHeight = global.config.minEditorHeight;
-	const maxEditorHeight = global.config.maxEditorHeight;
-	const [editorHeight, setEditorHeight] = useState("auto");
-
-	useEditorMaxHeight(
-		editorHeight,
-		maxEditorHeight,
-		minEditorHeight,
-		setEditorHeight,
-		expanded,
-		editorRef,
-	);
-
-	useSavedEditorWidth(editorWidth);
 
 	const auto = editorWidth === "auto";
 	const cssWidth = auto ? "auto" : `${editorWidth}px`;
 
-	const wrapperStyle = vertical
-		? { flex: "none", width: "100%" }
-		: {
-				flex: auto ? "1" : "0",
-				minWidth: auto ? "0" : cssWidth,
-				minHeight:
-					minHeightInPX > 0 ? `${minHeightInPX}px` : undefined,
-			};
+	// A flex column so the editor fills the box when the box is taller than
+	// the code (a dragged height, or a taller preview in the same row).
+	const boxStyle: CSSProperties = {
+		display: "flex",
+		flexDirection: "column",
+		...(vertical
+			? { flex: "none", width: "100%" }
+			: { flex: auto ? "1" : "0", minWidth: auto ? "0" : cssWidth }),
+		...sizes.editorBox,
+	};
 
 	return (
-		<div ref={editorRef} style={wrapperStyle}>
+		<div ref={boxRef} style={boxStyle}>
 			<div className="cp-editor-wrap">
 				<SandpackCodeEditor
 					showTabs={global.config.showFileTabs}
 					closableTabs={true}
 					style={{
-						height: editorHeight,
-						minHeight: `${minEditorHeight}px`,
+						flex: "1 1 auto",
+						minHeight: sizes.editor.minHeight,
+						maxHeight: sizes.editor.maxHeight,
 						width: cssWidth,
 					}}
 				/>
@@ -73,20 +58,4 @@ export function SandpackEditorWrapper({
 			/>
 		</div>
 	);
-}
-
-function useSavedEditorWidth(currentEditorWidth: EditorWidth) {
-	const { value: global } = useAppContext();
-	const { saveItem } = useStorage("editorWidth");
-	const debouncedSaveItem = useDebounce(saveItem, EDITOR_WIDTH_DEBOUNCE_MS);
-	useEffect(() => {
-		if (
-			!global.hasBeenCorrectlyLoaded ||
-			currentEditorWidth === "auto" ||
-			currentEditorWidth <= 0
-		) {
-			return;
-		}
-		debouncedSaveItem(currentEditorWidth);
-	}, [currentEditorWidth, debouncedSaveItem, global.hasBeenCorrectlyLoaded]);
 }
