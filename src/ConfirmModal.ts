@@ -1,4 +1,4 @@
-import { App, Modal, Setting } from "obsidian";
+import { App, Modal, Setting, requireApiVersion } from "obsidian";
 
 type ConfirmModalOptions = {
 	title: string;
@@ -34,17 +34,17 @@ export class ConfirmModal extends Modal {
 			.addButton((btn) =>
 				btn.setButtonText("Cancel").onClick(() => this.close()),
 			)
-			.addButton((btn) =>
-				btn
-					.setButtonText(confirmText)
-					// setDestructive() needs Obsidian 1.13.0, above our minAppVersion.
-					// eslint-disable-next-line @typescript-eslint/no-deprecated
-					.setWarning()
-					.onClick(() => {
-						this.close();
-						onConfirm();
-					}),
-			);
+			.addButton((btn) => {
+				btn.setButtonText(confirmText).onClick(() => {
+					this.close();
+					onConfirm();
+				});
+				if (requireApiVersion("1.13.0")) {
+					btn.setDestructive();
+				} else {
+					btn.buttonEl.addClass("mod-warning");
+				}
+			});
 	}
 
 	onClose(): void {
