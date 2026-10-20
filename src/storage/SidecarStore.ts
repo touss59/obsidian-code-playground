@@ -8,7 +8,9 @@ export type PlaygroundSidecar = {
 	version: 1;
 	files: SandpackBundlerFiles;
 	activeFile?: string;
+	/** Dragged editor column widths, in the block and in the full-screen modal. */
 	editorWidth?: number;
+	fullscreenEditorWidth?: number;
 	/** Dragged panel heights; absent means sized to content. */
 	rowHeight?: number;
 	editorHeight?: number;
@@ -16,7 +18,13 @@ export type PlaygroundSidecar = {
 	hiddenFiles?: string[];
 };
 
-const HEIGHT_FIELDS = ["rowHeight", "editorHeight", "paneHeight"] as const;
+const SIZE_FIELDS = [
+	"editorWidth",
+	"fullscreenEditorWidth",
+	"rowHeight",
+	"editorHeight",
+	"paneHeight",
+] as const;
 
 /**
  * Thrown when a sidecar file exists on disk but cannot be read, parsed, or
@@ -66,10 +74,7 @@ function isValidSidecar(v: unknown): v is PlaygroundSidecar {
 	if (v.activeFile !== undefined && typeof v.activeFile !== "string") {
 		return false;
 	}
-	if (v.editorWidth !== undefined && typeof v.editorWidth !== "number") {
-		return false;
-	}
-	for (const field of HEIGHT_FIELDS) {
+	for (const field of SIZE_FIELDS) {
 		if (v[field] !== undefined && typeof v[field] !== "number") {
 			return false;
 		}
@@ -183,13 +188,8 @@ export class SidecarStore {
 		// field (JSON.stringify drops it on disk), an absent key keeps the
 		// previous value. `files` stays non-clearable.
 		const next: PlaygroundSidecar = {
+			...prev,
 			version: 1,
-			activeFile: prev?.activeFile,
-			editorWidth: prev?.editorWidth,
-			rowHeight: prev?.rowHeight,
-			editorHeight: prev?.editorHeight,
-			paneHeight: prev?.paneHeight,
-			hiddenFiles: prev?.hiddenFiles,
 			...update,
 			files: update.files ?? prev?.files ?? {},
 		};

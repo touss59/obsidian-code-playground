@@ -33,6 +33,11 @@ export interface CodePlaygroundSettings {
 	showOpenInCodeSandbox: boolean;
 	playgroundFolder: string;
 	bundlerURL?: string;
+	showLineNumbers: boolean;
+	showInlineErrors: boolean;
+	wrapLines: boolean;
+	autocomplete: boolean;
+	formatOnSave: boolean;
 }
 
 export const DEFAULT_SETTINGS: CodePlaygroundSettings = {
@@ -48,6 +53,11 @@ export const DEFAULT_SETTINGS: CodePlaygroundSettings = {
 	showFileTabs: true,
 	showOpenInCodeSandbox: false,
 	playgroundFolder: DEFAULT_PLAYGROUND_FOLDER,
+	showLineNumbers: true,
+	showInlineErrors: true,
+	wrapLines: false,
+	autocomplete: true,
+	formatOnSave: true,
 };
 
 /**
@@ -388,5 +398,69 @@ export class CodePlaygroundSettingTab extends PluginSettingTab {
 					},
 				});
 			});
+
+		new Setting(containerEl).setName("Editor").setHeading();
+
+		new Setting(containerEl)
+			.setName("Line numbers")
+			.setDesc("Show line numbers in the code editor.")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.showLineNumbers)
+					.onChange(async (value) => {
+						this.plugin.settings.showLineNumbers = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Inline errors")
+			.setDesc("Highlight the line that causes a bundler error.")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.showInlineErrors)
+					.onChange(async (value) => {
+						this.plugin.settings.showInlineErrors = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Wrap lines")
+			.setDesc("Wrap long lines instead of scrolling horizontally.")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.wrapLines)
+					.onChange(async (value) => {
+						this.plugin.settings.wrapLines = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Autocomplete")
+			.setDesc("Suggest keywords, snippets and names from the current file.")
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.autocomplete)
+					.onChange(async (value) => {
+						this.plugin.settings.autocomplete = value;
+						await this.plugin.saveSettings();
+					}),
+			);
+
+		new Setting(containerEl)
+			.setName("Format on save")
+			.setDesc(
+				"Format the current file with Prettier when you press Ctrl+S (Cmd+S on macOS) in the editor. Shift+Alt+F always formats. A .prettierrc file in the playground sets the options.",
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.formatOnSave)
+					.onChange(async (value) => {
+						this.plugin.settings.formatOnSave = value;
+						await this.plugin.saveSettings();
+					}),
+			);
 	}
 }

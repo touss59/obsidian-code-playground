@@ -1,6 +1,6 @@
 import { SandpackProvider } from "@codesandbox/sandpack-react";
 import type { SandpackBundlerFiles } from "@codesandbox/sandpack-client";
-import { CSSProperties, useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { App } from "obsidian";
 import { ResolvedCodePlaygroundConfig } from "config";
 import { resolveTheme } from "themes";
@@ -12,6 +12,7 @@ import { SandpackWrapper } from "CodePlaygroundBlock/Sandpack/SandpackWrapper";
 import { STATIC_RESIZE_REPORTER_URL } from "CodePlaygroundBlock/Sandpack/staticResizeReporter";
 import { useStorage } from "CodePlaygroundBlock/useStorage";
 import { PlaygroundErrorBoundary } from "CodePlaygroundBlock/ErrorBoundary";
+import { rootStyle } from "CodePlaygroundBlock/rootStyle";
 import { SidecarStore } from "storage/SidecarStore";
 
 type CodePlaygroundAppProps = {
@@ -84,14 +85,9 @@ function AppContent() {
 		[global.config.theme],
 	);
 	const rootId = `${global.config.id}-root`;
-	const rootStyle = {
-		"--cp-border": global.config.borderColor,
-		"--cp-button-bg": global.config.buttonBackgroundColor,
-		"--cp-button-text": global.config.buttonTextColor,
-	} as CSSProperties;
 
 	return (
-		<div id={rootId} className="cp-root" style={rootStyle}>
+		<div id={rootId} className="cp-root" style={rootStyle(global.config)}>
 			{loadState.status === "loading" ? (
 				<div className="cp-loading">Loading playground…</div>
 			) : loadState.status === "error" ? (

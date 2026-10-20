@@ -19,6 +19,8 @@ If any of your playground content is sensitive, do not put it in a block, becaus
 ## Features
 
 - Live, in-note code editor + preview powered by Sandpack.
+- Editor with search and replace, code folding, multiple cursors, autocomplete, and Prettier formatting with `.prettierrc` support.
+- Full-screen mode: a large editor and preview in a modal, with a draggable split.
 - Supports every Sandpack template (`react`, `vanilla`, `vue`, `angular`, `svelte`, …).
 - Per-block JSON overrides for template, theme, layout, panel visibility, sizing, colors.
 - Side-by-side or stacked full-width panel layout, set vault-wide or per block.
@@ -98,6 +100,45 @@ To change a height:
 
 Content that fills its viewport (for example `height: 100vh`) has no height of its own. Its preview stays at `minEditorHeight` until you drag it.
 
+## Editor
+
+The editor is Sandpack's CodeMirror editor with extra extensions. The **Editor** settings turn each one on or off for every block (see [Settings](#settings)). Shortcuts apply while the editor has focus.
+
+| Action                      | Shortcut                                                                             |
+| --------------------------- | ------------------------------------------------------------------------------------ |
+| Find and replace            | `Ctrl/Cmd + F`                                                                       |
+| Next / previous match       | `F3` / `Shift + F3`, or `Ctrl/Cmd + G` / `Ctrl/Cmd + Shift + G`                      |
+| Select the next occurrence  | `Ctrl/Cmd + D`                                                                       |
+| Select all occurrences      | `Ctrl/Cmd + Shift + L`                                                               |
+| Go to line                  | `Ctrl/Cmd + Alt + G`                                                                 |
+| Fold / unfold at the cursor | `Ctrl + Shift + [` / `]` (macOS: `Cmd + Alt + [` / `]`), or click the gutter marker |
+| Fold / unfold all           | `Ctrl + Alt + [` / `]`                                                               |
+| Add a cursor                | `Ctrl/Cmd + click`                                                                   |
+| Select a rectangle          | `Alt + drag`                                                                         |
+| Open autocomplete           | `Ctrl + Space` (it also opens as you type)                                           |
+| Format the file             | `Shift + Alt + F`, or `Ctrl/Cmd + S` when **Format on save** is on                   |
+
+### Formatting
+
+**Format** runs [Prettier](https://prettier.io/) on the current file. It supports JavaScript, TypeScript, JSX, TSX, JSON, CSS, SCSS, Less, HTML and Vue files. Other file types show a notice. One undo reverts a format. On a syntax error, a notice shows the first line of Prettier's message and the code stays as it is.
+
+**Format on save** shows no notice. On other file types it does nothing, and on a syntax error it keeps the code as it is.
+
+To set Prettier options, add a `/.prettierrc` or `/.prettierrc.json` file to the playground with **Manage files**. The file must be JSON. Only these keys apply: `printWidth`, `tabWidth`, `useTabs`, `semi`, `singleQuote`, `jsxSingleQuote`, `quoteProps`, `trailingComma`, `bracketSpacing`, `bracketSameLine`, `arrowParens`, `singleAttributePerLine`.
+
+```json
+{ "semi": false, "singleQuote": true, "tabWidth": 4 }
+```
+
+## Full-screen editor
+
+**Full screen** (bottom right of the editor) opens the block in a large modal: the editor on one side, the preview or console on the other. It is the same playground. Edits save to the block and show in it when you close the modal. The modal has its own **Format** and **Manage files** buttons.
+
+- **Drag** the divider between the editor and the preview to change the split. The width is saved with the block, separate from the block's own editor width.
+- **Double-click** the divider to return to an even split.
+- On a narrow window the panes stack and the divider is hidden.
+- Close the modal with `Escape`, the close button, or a click outside it. If the search panel or the autocomplete list is open, `Escape` closes it first.
+
 ## Per-block overrides
 
 Any field above can be overridden on a single block without touching the plugin settings. Example — a dark-themed React playground with the console enabled and a custom border:
@@ -141,6 +182,8 @@ Open **Settings → Code Playground** to set vault-wide defaults:
 - **Show 'Open in CodeSandbox' button** — adds an export button to every block.
 - **Playground sidecar folder** — vault-relative folder where per-block state is stored (default `_playgrounds`). Changing this only affects new writes; existing sidecars in the old folder stay where they are.
 - **Self-hosted bundler URL** — advanced. Point Sandpack at your own bundler instead of CodeSandbox's hosted service, so playground code and dependency resolution go to an endpoint you control. Leave empty to use the default. See [Network use & privacy](#️-network-use--privacy--please-read).
+- **Editor → Line numbers / Inline errors / Wrap lines / Autocomplete** — editor features for every block. *Inline errors* highlights the line a bundler error points at. See [Editor](#editor).
+- **Editor → Format on save** — `Ctrl/Cmd + S` in the editor formats the file with Prettier. `Shift + Alt + F` always formats. See [Formatting](#formatting).
 
 ## Commands
 
@@ -166,9 +209,13 @@ The folder defaults to `_playgrounds/`. The sidecar schema (only `version` and `
   "files": { "/App.js": "…", "/index.js": "…" },
   "activeFile": "/App.js",
   "editorWidth": 480,
+  "fullscreenEditorWidth": 900,
+  "rowHeight": 320,
   "hiddenFiles": ["/index.js"]
 }
 ```
+
+`editorWidth` and `fullscreenEditorWidth` are the dragged editor widths of the block and of the full-screen modal. `rowHeight`, `editorHeight` and `paneHeight` are the dragged panel heights (see [Panel heights](#panel-heights)).
 
 Because the sidecars live in the vault, they sync wherever your vault syncs (Obsidian Sync, iCloud, Dropbox, Git, …). No localStorage, no extra config.
 

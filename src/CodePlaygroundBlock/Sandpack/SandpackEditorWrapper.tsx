@@ -1,8 +1,7 @@
-import { SandpackCodeEditor } from "@codesandbox/sandpack-react";
 import { useState, type CSSProperties, type RefObject } from "react";
-import { useAppContext } from "CodePlaygroundBlock/AppContextProvider";
 import { ManageFilesModal } from "CodePlaygroundBlock/ManageFilesModal";
 import type { BlockSizes } from "CodePlaygroundBlock/blockSizes";
+import { PlaygroundCodeEditor } from "CodePlaygroundBlock/Sandpack/PlaygroundCodeEditor";
 import type { EditorWidth } from "CodePlaygroundBlock/Sandpack/useEditorColumnResize";
 
 export function SandpackEditorWrapper({
@@ -10,13 +9,14 @@ export function SandpackEditorWrapper({
 	editorWidth,
 	sizes,
 	vertical,
+	onOpenFullscreen,
 }: {
 	boxRef: RefObject<HTMLDivElement>;
 	editorWidth: EditorWidth;
 	sizes: Pick<BlockSizes, "editorBox" | "editor">;
 	vertical: boolean;
+	onOpenFullscreen: () => void;
 }) {
-	const { value: global } = useAppContext();
 	const [showManage, setShowManage] = useState(false);
 
 	const auto = editorWidth === "auto";
@@ -36,9 +36,7 @@ export function SandpackEditorWrapper({
 	return (
 		<div ref={boxRef} style={boxStyle}>
 			<div className="cp-editor-wrap">
-				<SandpackCodeEditor
-					showTabs={global.config.showFileTabs}
-					closableTabs={true}
+				<PlaygroundCodeEditor
 					style={{
 						flex: "1 1 auto",
 						minHeight: sizes.editor.minHeight,
@@ -46,7 +44,10 @@ export function SandpackEditorWrapper({
 						width: cssWidth,
 					}}
 				/>
-				<div className="cp-manage-files-button">
+				<div className="cp-editor-buttons">
+					<button onClick={onOpenFullscreen} title="Open in a large editor">
+						Full screen
+					</button>
 					<button onClick={() => setShowManage(true)}>
 						Manage files
 					</button>

@@ -268,11 +268,96 @@ div.sp-tab-container {
     min-height: 0;
 }
 
-.cp-manage-files-button {
+.cp-editor-buttons {
     position: absolute;
     bottom: 5px;
     right: 5px;
     z-index: 1;
+    display: flex;
+    gap: 4px;
+}
+
+/* Full-screen editor modal. The modal fills most of the window, and the
+   editor and preview share its height. */
+.modal.cp-fullscreen-modal {
+    width: 96vw;
+    height: 92vh;
+    max-width: none;
+    max-height: none;
+}
+
+.cp-fullscreen-modal .modal-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.cp-root.cp-fullscreen {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+.cp-fullscreen-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.cp-fullscreen-body {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    border: 1px solid var(--sp-colors-surface2);
+    border-radius: var(--sp-border-radius);
+    overflow: hidden;
+}
+
+.cp-fullscreen-editor {
+    display: flex;
+    flex-direction: column;
+    /* The dragged width, saved per block (see useEditorColumnResize). The
+       .cp-resizer next to it draws the divider, so the panes need no border.
+       The caps keep both panes usable when a saved width meets a smaller
+       window. */
+    flex: 0 0 var(--cp-fullscreen-editor, 50%);
+    min-width: 15%;
+    max-width: 85%;
+    min-height: 0;
+}
+
+/* No preview or console: the editor takes the whole width. */
+.cp-fullscreen-editor:only-child {
+    flex: 1 1 0;
+    max-width: none;
+}
+
+@media (max-width: 768px) {
+    .cp-fullscreen-body {
+        flex-direction: column;
+    }
+
+    /* Stacked: the split and its divider no longer apply. */
+    .cp-fullscreen-editor {
+        flex: 1 1 0;
+        min-width: 0;
+        max-width: none;
+    }
+
+    .cp-fullscreen-body > .cp-resizer {
+        display: none;
+    }
+
+    .cp-fullscreen-editor ~ * {
+        border-top: 1px solid var(--sp-colors-surface2);
+    }
 }
 
 /* Vertical layout: panes stack and each spans the full block width. Pane

@@ -1,20 +1,24 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { useSandpack } from "@codesandbox/sandpack-react";
 import {
 	nextContentHeight,
 	type PreviewReport,
 } from "CodePlaygroundBlock/previewContentHeight";
+import { useClientListen } from "CodePlaygroundBlock/Sandpack/useClientListen";
 
 /**
  * Preview content height in px, padded so the content is not clipped. 0
  * until the preview reports a height, or while the content follows the
  * viewport (see nextContentHeight).
+ *
+ * It reads the reports of the `clientId` preview only. Other previews of the
+ * block (e.g. in the full-screen modal) have their own height.
  */
 export function usePreviewContentHeight(
 	enabled: boolean,
 	previewRef: RefObject<HTMLElement>,
+	clientId: string | undefined,
 ): number {
-	const { listen } = useSandpack();
+	const listen = useClientListen(clientId);
 	const [height, setHeight] = useState(0);
 	const lastReportRef = useRef<PreviewReport | null>(null);
 

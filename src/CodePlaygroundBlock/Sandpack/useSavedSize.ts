@@ -4,7 +4,12 @@ import { useDebounce } from "CodePlaygroundBlock/useDebounce";
 import { useStorage } from "CodePlaygroundBlock/useStorage";
 import { DRAGGED_SIZE_DEBOUNCE_MS } from "appConstants";
 
-type SizeField = "editorWidth" | "rowHeight" | "editorHeight" | "paneHeight";
+type SizeField =
+	| "editorWidth"
+	| "fullscreenEditorWidth"
+	| "rowHeight"
+	| "editorHeight"
+	| "paneHeight";
 
 /**
  * A size the user set by dragging a handle, saved per block. `set` rounds and

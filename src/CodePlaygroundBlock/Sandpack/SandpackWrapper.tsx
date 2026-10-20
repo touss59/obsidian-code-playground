@@ -19,6 +19,7 @@ import { useEditorColumnResize } from "CodePlaygroundBlock/Sandpack/useEditorCol
 import { usePanelHeightResize } from "CodePlaygroundBlock/Sandpack/usePanelHeightResize";
 import { PreviewPane } from "CodePlaygroundBlock/Sandpack/PreviewPane";
 import { ConsolePane } from "CodePlaygroundBlock/Sandpack/ConsolePane";
+import { FullscreenModal } from "CodePlaygroundBlock/Sandpack/FullscreenModal";
 import { useBlockSizes } from "CodePlaygroundBlock/Sandpack/useBlockSizes";
 
 const HIDDEN: CSSProperties = { display: "none" };
@@ -57,6 +58,12 @@ function SandpackContent({
 	// button (a dragged row has none) never leaves the block stuck expanded.
 	const collapse = useCallback(() => setExpanded(false), []);
 
+	const [fullscreen, setFullscreen] = useState(false);
+	const closeFullscreen = useCallback(() => setFullscreen(false), []);
+	// The modal opens a second preview. The block's console and height
+	// read the messages of the block's preview only.
+	const [inlineClientId, setInlineClientId] = useState<string>();
+
 	const columnResize = useEditorColumnResize();
 	const rowResize = usePanelHeightResize("rowHeight", collapse);
 	const editorResize = usePanelHeightResize("editorHeight", collapse);
@@ -79,6 +86,7 @@ function SandpackContent({
 		},
 		previewRef,
 		editorBoxRef,
+		previewClientId: inlineClientId,
 	});
 	const paneStyle: CSSProperties =
 		sizes.paneHeight === undefined
@@ -98,6 +106,7 @@ function SandpackContent({
 							}
 							sizes={sizes}
 							vertical={vertical}
+							onOpenFullscreen={() => setFullscreen(true)}
 						/>
 						{showColumnResizer && (
 							<div
@@ -111,6 +120,7 @@ function SandpackContent({
 				{showPreview && (
 					<PreviewPane
 						containerRef={previewRef}
+						onClientIdChange={setInlineClientId}
 						style={showConsole ? HIDDEN : paneStyle}
 						resizing={resizing}
 						previewLoadState={previewLoadState}
@@ -120,9 +130,10 @@ function SandpackContent({
 						}
 					/>
 				)}
-				{showConsoleButton && (
+				{showConsoleButton && (!showPreview || inlineClientId) && (
 					<ConsolePane
 						style={showConsole ? paneStyle : HIDDEN}
+						clientId={inlineClientId}
 						onShowPreview={
 							showPreview ? () => setShowConsole(false) : undefined
 						}
@@ -136,6 +147,12 @@ function SandpackContent({
 					<ExpandableButton expanded={expanded} setExpanded={setExpanded} />
 				</div>
 			)}
+			<FullscreenModal
+				open={fullscreen}
+				onClose={closeFullscreen}
+				previewLoadState={previewLoadState}
+				isOnline={isOnline}
+			/>
 		</>
 	);
 }

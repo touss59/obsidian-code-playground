@@ -40,7 +40,15 @@ export type ResolvedCodePlaygroundConfig = Required<
 	// Global-only advanced setting (not a per-block key): merged in from plugin
 	// settings, so it's readable here but never accepted in a block's JSON.
 	bundlerURL?: string;
-};
+} & Pick<
+		// Global-only editor preferences, merged in the same way.
+		CodePlaygroundSettings,
+		| "showLineNumbers"
+		| "showInlineErrors"
+		| "wrapLines"
+		| "autocomplete"
+		| "formatOnSave"
+	>;
 
 export const VALID_TEMPLATES = Object.keys(SANDBOX_TEMPLATES);
 

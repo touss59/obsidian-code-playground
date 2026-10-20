@@ -1,8 +1,9 @@
 import { useSandpack } from "@codesandbox/sandpack-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Modal, Notice } from "obsidian";
+import { Notice } from "obsidian";
 import { useAppContext } from "CodePlaygroundBlock/AppContextProvider";
+import { useObsidianModal } from "CodePlaygroundBlock/useObsidianModal";
 import { FILE_EXTENSION_RE, isValidPlaygroundFilePath } from "validators";
 
 type Props = {
@@ -17,28 +18,12 @@ export function ManageFilesModal({ open, onClose }: Props) {
 	const [newFilePath, setNewFilePath] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [pendingDelete, setPendingDelete] = useState<string | null>(null);
-	const [containerEl, setContainerEl] = useState<HTMLElement | null>(null);
-
-	// Keep the latest onClose without re-creating the modal on every render.
-	const onCloseRef = useRef(onClose);
-	onCloseRef.current = onClose;
-
-	// Host the React contents inside a native Obsidian Modal so we inherit its
-	// theming, focus management, Escape handling, click-outside, and animations.
-	useEffect(() => {
-		if (!open) return;
-		const modal = new Modal(app);
-		modal.titleEl.setText("Manage files");
-		modal.onClose = () => {
-			setContainerEl(null);
-			onCloseRef.current();
-		};
-		modal.open();
-		setContainerEl(modal.contentEl);
-		return () => {
-			modal.close();
-		};
-	}, [open, app]);
+	const modal = useObsidianModal({
+		app,
+		open,
+		onClose,
+		title: "Manage files",
+	});
 
 	useEffect(() => {
 		if (!open) {
@@ -48,7 +33,7 @@ export function ManageFilesModal({ open, onClose }: Props) {
 		}
 	}, [open]);
 
-	if (!open || !containerEl) return null;
+	if (!modal) return null;
 
 	const allPaths = Object.keys(sandpack.files);
 	const visibleSet = new Set(sandpack.visibleFiles);
@@ -173,6 +158,6 @@ export function ManageFilesModal({ open, onClose }: Props) {
 				})}
 			</div>
 		</div>,
-		containerEl,
+		modal.contentEl,
 	);
 }
