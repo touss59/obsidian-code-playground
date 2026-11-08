@@ -1,8 +1,21 @@
-import { SandpackCodeEditor, type CodeEditorRef } from "@codesandbox/sandpack-react";
+import { python } from "@codemirror/lang-python";
+import {
+	SandpackCodeEditor,
+	type CodeEditorRef,
+	type CustomLanguage,
+} from "@codesandbox/sandpack-react";
 import type { Scope } from "obsidian";
 import { forwardRef, type CSSProperties } from "react";
 import { useAppContext } from "CodePlaygroundBlock/AppContextProvider";
 import { useEditorExtensions } from "CodePlaygroundBlock/Sandpack/editorExtensions";
+
+/**
+ * Languages that Sandpack does not know. Without an entry, Sandpack
+ * highlights the file as JavaScript.
+ */
+const ADDITIONAL_LANGUAGES: CustomLanguage[] = [
+	{ name: "python", extensions: ["py"], language: python() },
+];
 
 /** Sandpack's code editor with the editor settings and extensions applied. */
 export const PlaygroundCodeEditor = forwardRef<
@@ -35,7 +48,11 @@ export const PlaygroundCodeEditor = forwardRef<
 			showLineNumbers={showLineNumbers}
 			showInlineErrors={showInlineErrors}
 			wrapContent={wrapLines}
+			// Runtime blocks (e.g. Python) have their own Run button in the
+			// output pane.
+			showRunButton={!global.runtime}
 			extensions={extensions}
+			additionalLanguages={ADDITIONAL_LANGUAGES}
 			style={style}
 		/>
 	);

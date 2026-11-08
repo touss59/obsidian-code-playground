@@ -3,12 +3,18 @@ import type React from "react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { ResolvedCodePlaygroundConfig } from "config";
 import type { SidecarStore } from "storage/SidecarStore";
+import type { RuntimeRunners } from "CodePlaygroundBlock/Runtime/WorkerRunner";
+import type { PlaygroundRuntime } from "CodePlaygroundBlock/Runtime/PlaygroundRuntime";
 
 type AppContext = {
     config: ResolvedCodePlaygroundConfig;
     ObsidianApp: App;
     hasBeenCorrectlyLoaded: boolean;
     store: SidecarStore;
+    /** The plugin's shared workers, used by runtime blocks (e.g. Python) only. */
+    runtimes: RuntimeRunners;
+    /** The block's runtime. Unset for a Sandpack template. */
+    runtime?: PlaygroundRuntime;
 };
 
 type AppContextType = {

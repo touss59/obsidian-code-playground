@@ -1,8 +1,10 @@
 import { SANDBOX_TEMPLATES } from "@codesandbox/sandpack-react";
+import type { SandpackPredefinedTemplate } from "@codesandbox/sandpack-react/types";
 import { CodePlaygroundSettings } from "settings";
 import { VALID_THEMES } from "themes";
 import { HEX_COLOR_RE } from "validators";
 import { ID_RE } from "appConstants";
+import { RUNTIMES, type RuntimeTemplate } from "CodePlaygroundBlock/Runtime/runtimes";
 
 const OPTIONAL_CONFIG_KEYS = [
 	"borderColor",
@@ -50,7 +52,13 @@ export type ResolvedCodePlaygroundConfig = Required<
 		| "formatOnSave"
 	>;
 
-export const VALID_TEMPLATES = Object.keys(SANDBOX_TEMPLATES);
+/** A Sandpack template, or one of the plugin's own runtimes (e.g. "python"). */
+export type PlaygroundTemplate = SandpackPredefinedTemplate | RuntimeTemplate;
+
+export const VALID_TEMPLATES: readonly string[] = [
+	...Object.keys(SANDBOX_TEMPLATES),
+	...Object.keys(RUNTIMES),
+];
 
 /** How a block's panes are arranged: side by side, or stacked full-width. */
 export const VALID_LAYOUTS = ["horizontal", "vertical"] as const;

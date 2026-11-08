@@ -25,6 +25,9 @@ export const RESIZER_THROTTLE_MS = 16;
 /** Debounce window for the editor-change id scan. */
 export const ID_SCAN_DEBOUNCE_MS = 500;
 
+/** Pause in typing before a runtime block (e.g. Python) runs its code again. */
+export const RUNTIME_RERUN_DEBOUNCE_MS = 500;
+
 // --- Layout ---------------------------------------------------------------
 
 /**
@@ -54,6 +57,18 @@ export const FENCE_NAMES: readonly string[] = ["code-playground", "codePlaygroun
 
 /** Fence name emitted when inserting a new block. */
 export const CANONICAL_FENCE_NAME = "code-playground";
+
+// --- Runtimes -------------------------------------------------------------
+
+/** Output lines a runtime block (e.g. Python) keeps. Later lines are dropped. */
+export const RUNTIME_MAX_OUTPUT_LINES = 2000;
+
+/**
+ * Time a dropped run whose code started (e.g. its block closed) has to end
+ * when another run waits. After that, it stops with its worker, and the
+ * engine loads again.
+ */
+export const RUNTIME_DROPPED_RUN_GRACE_MS = 2000;
 
 // --- Documentation --------------------------------------------------------
 

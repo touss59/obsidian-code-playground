@@ -1,6 +1,5 @@
 import type { RefObject } from "react";
 import { useAppContext } from "CodePlaygroundBlock/AppContextProvider";
-import { usePreviewContentHeight } from "CodePlaygroundBlock/usePreviewContentHeight";
 import { useEditorOverflow } from "CodePlaygroundBlock/Sandpack/useEditorOverflow";
 import {
 	computeBlockSizes,
@@ -11,28 +10,21 @@ import {
 /** Feeds the block config and the measured content to computeBlockSizes. */
 export function useBlockSizes({
 	expanded,
-	consoleShown,
 	manual,
-	previewRef,
 	editorBoxRef,
-	previewClientId,
+	contentHeight,
+	contentVisible,
 }: {
 	expanded: boolean;
-	consoleShown: boolean;
 	manual: ManualHeights;
-	previewRef: RefObject<HTMLElement>;
 	editorBoxRef: RefObject<HTMLElement>;
-	/** The block's preview. The full-screen modal's preview is ignored. */
-	previewClientId: string | undefined;
+	/** The height of the pane content: the preview's, or a runtime's output. */
+	contentHeight: number;
+	/** False while the console hides the preview. */
+	contentVisible: boolean;
 }): BlockSizes {
 	const { value: global } = useAppContext();
-	const { layout, showEditor, showPreview, minEditorHeight, maxEditorHeight } =
-		global.config;
-	const previewContentHeight = usePreviewContentHeight(
-		showPreview,
-		previewRef,
-		previewClientId,
-	);
+	const { layout, showEditor, minEditorHeight, maxEditorHeight } = global.config;
 	const editorOverflows = useEditorOverflow(editorBoxRef, showEditor);
 
 	return computeBlockSizes({
@@ -41,8 +33,8 @@ export function useBlockSizes({
 		minHeight: minEditorHeight,
 		maxHeight: maxEditorHeight,
 		expanded,
-		previewContentHeight,
-		previewVisible: showPreview && !consoleShown,
+		previewContentHeight: contentHeight,
+		previewVisible: contentVisible,
 		editorOverflows,
 		manual,
 	});

@@ -21,6 +21,8 @@ import { PlaygroundCodeEditor } from "CodePlaygroundBlock/Sandpack/PlaygroundCod
 import { PreviewPane } from "CodePlaygroundBlock/Sandpack/PreviewPane";
 import { useEditorColumnResize } from "CodePlaygroundBlock/Sandpack/useEditorColumnResize";
 import type { PreviewLoadState } from "CodePlaygroundBlock/Sandpack/usePreviewLoadState";
+import { RuntimeOutputPane } from "CodePlaygroundBlock/Runtime/RuntimeOutputPane";
+import type { RuntimeRun } from "CodePlaygroundBlock/Runtime/useRuntimeRun";
 import { resolveTheme } from "themes";
 
 const HIDDEN: CSSProperties = { display: "none" };
@@ -37,6 +39,8 @@ type Props = {
 	onClose: () => void;
 	previewLoadState: PreviewLoadState;
 	isOnline: boolean;
+	/** The block's runtime run, shown in place of the preview and console. */
+	runtimeRun?: RuntimeRun;
 };
 
 /**
@@ -48,6 +52,7 @@ export function FullscreenModal({
 	onClose,
 	previewLoadState,
 	isOnline,
+	runtimeRun,
 }: Props) {
 	const { value: global } = useAppContext();
 	const modal = useObsidianModal({
@@ -66,6 +71,7 @@ export function FullscreenModal({
 		<FullscreenContent
 			previewLoadState={previewLoadState}
 			isOnline={isOnline}
+			runtimeRun={runtimeRun}
 			columnResize={columnResize}
 			modalScope={modal.scope}
 		/>,
@@ -76,9 +82,10 @@ export function FullscreenModal({
 function FullscreenContent({
 	previewLoadState,
 	isOnline,
+	runtimeRun,
 	columnResize,
 	modalScope,
-}: Pick<Props, "previewLoadState" | "isOnline"> & {
+}: Pick<Props, "previewLoadState" | "isOnline" | "runtimeRun"> & {
 	columnResize: ReturnType<typeof useEditorColumnResize>;
 	modalScope: Scope;
 }) {
@@ -149,26 +156,32 @@ function FullscreenContent({
 						onDoubleClick={columnResize.reset}
 					/>
 				)}
-				{showPreview && (
-					<PreviewPane
-						onClientIdChange={setClientId}
-						style={consoleShown ? HIDDEN : PANE}
-						resizing={columnResize.dragging}
-						previewLoadState={previewLoadState}
-						isOnline={isOnline}
-						onShowConsole={
-							consoleEnabled ? () => setConsoleShown(true) : undefined
-						}
-					/>
-				)}
-				{consoleEnabled && (!showPreview || clientId) && (
-					<ConsolePane
-						style={consoleShown ? PANE : HIDDEN}
-						clientId={clientId}
-						onShowPreview={
-							showPreview ? () => setConsoleShown(false) : undefined
-						}
-					/>
+				{runtimeRun ? (
+					hasPane && <RuntimeOutputPane run={runtimeRun} style={PANE} />
+				) : (
+					<>
+						{showPreview && (
+							<PreviewPane
+								onClientIdChange={setClientId}
+								style={consoleShown ? HIDDEN : PANE}
+								resizing={columnResize.dragging}
+								previewLoadState={previewLoadState}
+								isOnline={isOnline}
+								onShowConsole={
+									consoleEnabled ? () => setConsoleShown(true) : undefined
+								}
+							/>
+						)}
+						{consoleEnabled && (!showPreview || clientId) && (
+							<ConsolePane
+								style={consoleShown ? PANE : HIDDEN}
+								clientId={clientId}
+								onShowPreview={
+									showPreview ? () => setConsoleShown(false) : undefined
+								}
+							/>
+						)}
+					</>
 				)}
 			</div>
 			<ManageFilesModal

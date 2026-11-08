@@ -1,6 +1,7 @@
 import { SandpackLayout } from "@codesandbox/sandpack-react";
 import {
 	useCallback,
+	useEffect,
 	useRef,
 	useState,
 	type CSSProperties,
@@ -8,8 +9,12 @@ import {
 } from "react";
 import { useAppContext } from "CodePlaygroundBlock/AppContextProvider";
 import { ExpandableButton } from "CodePlaygroundBlock/ExpandableButton";
-import { useCodeSaver } from "CodePlaygroundBlock/useCodeSaver";
+import { useCodeSaver, useRuntimeCodeSaver } from "CodePlaygroundBlock/useCodeSaver";
 import { useFilesVisibilityOn } from "CodePlaygroundBlock/useFilesVisibilityOn";
+import { usePreviewContentHeight } from "CodePlaygroundBlock/usePreviewContentHeight";
+import type { PlaygroundRuntime } from "CodePlaygroundBlock/Runtime/PlaygroundRuntime";
+import { RuntimeOutputPane } from "CodePlaygroundBlock/Runtime/RuntimeOutputPane";
+import { useRuntimeRun, type RuntimeRun } from "CodePlaygroundBlock/Runtime/useRuntimeRun";
 import {
 	usePreviewLoadState,
 	type PreviewLoadState,
@@ -37,18 +42,41 @@ export function SandpackWrapper() {
 	);
 }
 
+/** A runtime block (e.g. Python): its shared worker runs the files. */
+export function RuntimePlayground({ runtime }: { runtime: PlaygroundRuntime }) {
+	const { value: global, setValue } = useAppContext();
+	// No bundler has to load first: the files can save at once.
+	useEffect(() => {
+		if (!global.hasBeenCorrectlyLoaded) {
+			setValue({ ...global, hasBeenCorrectlyLoaded: true });
+		}
+	}, [global, setValue]);
+	useRuntimeCodeSaver();
+	useFilesVisibilityOn(false);
+	const { showPreview, showConsole } = global.config;
+	const run = useRuntimeRun(runtime, showPreview || showConsole);
+
+	return (
+		<SandpackContent previewLoadState="loaded" isOnline={true} runtimeRun={run} />
+	);
+}
+
 function SandpackContent({
 	previewLoadState,
 	isOnline,
+	runtimeRun,
 }: {
 	previewLoadState: PreviewLoadState;
 	isOnline: boolean;
+	/** Set for runtime blocks: their output pane replaces the preview and console. */
+	runtimeRun?: RuntimeRun;
 }) {
 	const { value: global } = useAppContext();
 	const { showEditor, showPreview, showConsole: showConsoleButton } =
 		global.config;
 	const vertical = global.config.layout === "vertical";
 	const hasPane = showPreview || showConsoleButton;
+	const [outputHeight, setOutputHeight] = useState(0);
 
 	const [showConsole, setShowConsole] = useState(
 		!showPreview && showConsoleButton,
@@ -76,17 +104,21 @@ function SandpackContent({
 
 	const previewRef = useRef<HTMLDivElement>(null);
 	const editorBoxRef = useRef<HTMLDivElement>(null);
+	const previewHeight = usePreviewContentHeight(
+		showPreview && !runtimeRun,
+		previewRef,
+		inlineClientId,
+	);
 	const sizes = useBlockSizes({
 		expanded,
-		consoleShown: showConsole,
 		manual: {
 			row: rowResize.height,
 			editor: editorResize.height,
 			pane: paneResize.height,
 		},
-		previewRef,
 		editorBoxRef,
-		previewClientId: inlineClientId,
+		contentHeight: runtimeRun ? outputHeight : previewHeight,
+		contentVisible: runtimeRun ? true : showPreview && !showConsole,
 	});
 	const paneStyle: CSSProperties =
 		sizes.paneHeight === undefined
@@ -117,27 +149,39 @@ function SandpackContent({
 						{vertical && <HeightHandle resize={editorResize} />}
 					</>
 				)}
-				{showPreview && (
-					<PreviewPane
-						containerRef={previewRef}
-						onClientIdChange={setInlineClientId}
-						style={showConsole ? HIDDEN : paneStyle}
-						resizing={resizing}
-						previewLoadState={previewLoadState}
-						isOnline={isOnline}
-						onShowConsole={
-							showConsoleButton ? () => setShowConsole(true) : undefined
-						}
-					/>
-				)}
-				{showConsoleButton && (!showPreview || inlineClientId) && (
-					<ConsolePane
-						style={showConsole ? paneStyle : HIDDEN}
-						clientId={inlineClientId}
-						onShowPreview={
-							showPreview ? () => setShowConsole(false) : undefined
-						}
-					/>
+				{runtimeRun ? (
+					hasPane && (
+						<RuntimeOutputPane
+							run={runtimeRun}
+							style={paneStyle}
+							onContentHeight={setOutputHeight}
+						/>
+					)
+				) : (
+					<>
+						{showPreview && (
+							<PreviewPane
+								containerRef={previewRef}
+								onClientIdChange={setInlineClientId}
+								style={showConsole ? HIDDEN : paneStyle}
+								resizing={resizing}
+								previewLoadState={previewLoadState}
+								isOnline={isOnline}
+								onShowConsole={
+									showConsoleButton ? () => setShowConsole(true) : undefined
+								}
+							/>
+						)}
+						{showConsoleButton && (!showPreview || inlineClientId) && (
+							<ConsolePane
+								style={showConsole ? paneStyle : HIDDEN}
+								clientId={inlineClientId}
+								onShowPreview={
+									showPreview ? () => setShowConsole(false) : undefined
+								}
+							/>
+						)}
+					</>
 				)}
 				{vertical && hasPane && <HeightHandle resize={paneResize} />}
 			</SandpackLayout>
@@ -152,6 +196,7 @@ function SandpackContent({
 				onClose={closeFullscreen}
 				previewLoadState={previewLoadState}
 				isOnline={isOnline}
+				runtimeRun={runtimeRun}
 			/>
 		</>
 	);

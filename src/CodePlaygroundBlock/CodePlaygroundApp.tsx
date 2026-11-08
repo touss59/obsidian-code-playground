@@ -1,4 +1,7 @@
-import { SandpackProvider } from "@codesandbox/sandpack-react";
+import {
+	SandpackProvider,
+	type SandpackThemeProp,
+} from "@codesandbox/sandpack-react";
 import type { SandpackBundlerFiles } from "@codesandbox/sandpack-client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { App } from "obsidian";
@@ -8,28 +11,46 @@ import {
 	AppContextProvider,
 	useAppContext,
 } from "CodePlaygroundBlock/AppContextProvider";
-import { SandpackWrapper } from "CodePlaygroundBlock/Sandpack/SandpackWrapper";
+import {
+	RuntimePlayground,
+	SandpackWrapper,
+} from "CodePlaygroundBlock/Sandpack/SandpackWrapper";
 import { STATIC_RESIZE_REPORTER_URL } from "CodePlaygroundBlock/Sandpack/staticResizeReporter";
 import { useStorage } from "CodePlaygroundBlock/useStorage";
 import { PlaygroundErrorBoundary } from "CodePlaygroundBlock/ErrorBoundary";
 import { rootStyle } from "CodePlaygroundBlock/rootStyle";
 import { SidecarStore } from "storage/SidecarStore";
+import type { RuntimeRunners } from "CodePlaygroundBlock/Runtime/WorkerRunner";
+import type { PlaygroundRuntime } from "CodePlaygroundBlock/Runtime/PlaygroundRuntime";
+import {
+	getRuntime,
+	isRuntimeTemplate,
+	RUNTIMES,
+} from "CodePlaygroundBlock/Runtime/runtimes";
 
 type CodePlaygroundAppProps = {
 	config: ResolvedCodePlaygroundConfig;
 	app: App;
 	store: SidecarStore;
+	runtimes: RuntimeRunners;
 };
 
-export function CodePlaygroundApp({ config, app, store }: CodePlaygroundAppProps) {
+export function CodePlaygroundApp({
+	config,
+	app,
+	store,
+	runtimes,
+}: CodePlaygroundAppProps) {
 	const contextValue = useMemo(
 		() => ({
 			config,
 			ObsidianApp: app,
 			hasBeenCorrectlyLoaded: false,
 			store,
+			runtimes,
+			runtime: getRuntime(config.template),
 		}),
-		[config, app, store],
+		[config, app, store, runtimes],
 	);
 
 	return (
@@ -85,6 +106,7 @@ function AppContent() {
 		[global.config.theme],
 	);
 	const rootId = `${global.config.id}-root`;
+	const { template } = global.config;
 
 	return (
 		<div id={rootId} className="cp-root" style={rootStyle(global.config)}>
@@ -96,6 +118,12 @@ function AppContent() {
 					was not opened so your saved code is left untouched. Reload
 					the note or restart Obsidian to try again.
 				</div>
+			) : isRuntimeTemplate(template) ? (
+				<RuntimeSandpackProvider
+					runtime={RUNTIMES[template]}
+					savedFiles={loadState.files}
+					theme={theme}
+				/>
 			) : (
 				/* initMode "user-visible": only blocks near the viewport keep
 				   a live bundler iframe, which caps concurrent bundlers on
@@ -104,7 +132,7 @@ function AppContent() {
 				   reattached iframe goes blank; the intersection observer
 				   fires again and re-creates the client into it). */
 				<SandpackProvider
-					template={global.config.template}
+					template={template}
 					files={loadState.files}
 					theme={theme}
 					options={{
@@ -112,7 +140,7 @@ function AppContent() {
 						...(global.config.bundlerURL
 							? { bundlerURL: global.config.bundlerURL }
 							: {}),
-						...(global.config.template === "static"
+						...(template === "static"
 							? { externalResources: [STATIC_RESIZE_REPORTER_URL] }
 							: {}),
 					}}
@@ -121,6 +149,46 @@ function AppContent() {
 				</SandpackProvider>
 			)}
 		</div>
+	);
+}
+
+/**
+ * No template and no preview: Sandpack only holds the files for the editor.
+ * The runtime's shared worker runs them.
+ */
+function RuntimeSandpackProvider({
+	runtime,
+	savedFiles,
+	theme,
+}: {
+	runtime: PlaygroundRuntime;
+	savedFiles: SandpackBundlerFiles;
+	theme: SandpackThemeProp;
+}) {
+	const files =
+		Object.keys(savedFiles).length > 0 ? savedFiles : runtime.starterFiles;
+	// Sandpack needs an entry and dependencies even without a template. It
+	// then adds a /package.json, which runtime blocks hide and never save.
+	// Sandpack throws when the entry is not one of the files (e.g. the user
+	// deleted /main.py). It only writes the entry into /package.json, so any
+	// file does: the worker reports the missing entry when the block runs.
+	// Keep the object stable: Sandpack resets its files on a new one.
+	const setup = useMemo(
+		() => ({
+			entry: runtime.entry in files ? runtime.entry : Object.keys(files)[0],
+			dependencies: {},
+		}),
+		[runtime, files],
+	);
+	return (
+		<SandpackProvider
+			customSetup={setup}
+			files={files}
+			theme={theme}
+			options={{ autorun: false }}
+		>
+			<RuntimePlayground runtime={runtime} />
+		</SandpackProvider>
 	);
 }
 

@@ -5,6 +5,7 @@ import { useDebounce } from "CodePlaygroundBlock/useDebounce";
 import { useStorage } from "CodePlaygroundBlock/useStorage";
 import { useSandpack } from "@codesandbox/sandpack-react";
 import { HIDDEN_FILES_DEBOUNCE_MS, SAVE_FILES_DEBOUNCE_MS } from "appConstants";
+import { withoutPackageJson } from "CodePlaygroundBlock/Runtime/runtimeFiles";
 
 export function useCodeSaver() {
 	const { value: global } = useAppContext();
@@ -59,6 +60,31 @@ export function useCodeSaver() {
 	}, [global.hasBeenCorrectlyLoaded, saveNewState]);
 }
 
+/**
+ * Runtime blocks (e.g. Python) have no bundler, so no bundler message
+ * triggers a save. This saves the files after each change instead, without
+ * Sandpack's /package.json.
+ */
+export function useRuntimeCodeSaver() {
+	const { value: global } = useAppContext();
+	const { sandpack } = useSandpack();
+	const { saveItem } = useStorage("files");
+	useActiveFileStorage(sandpack);
+	useHiddenFilesStorage(sandpack);
+
+	const saveFiles = useCallback(
+		(files: SandpackBundlerFiles) => saveItem(withoutPackageJson(files)),
+		[saveItem],
+	);
+
+	const debouncedSaveFiles = useDebounce(saveFiles, SAVE_FILES_DEBOUNCE_MS);
+
+	useEffect(() => {
+		if (!global.hasBeenCorrectlyLoaded) return;
+		debouncedSaveFiles(sandpack.files);
+	}, [global.hasBeenCorrectlyLoaded, sandpack.files, debouncedSaveFiles]);
+}
+
 function useHiddenFilesStorage(
 	sandpack: ReturnType<typeof useSandpack>["sandpack"],
 ) {
@@ -68,10 +94,13 @@ function useHiddenFilesStorage(
 
 	const visibleFilesKey = (sandpack.visibleFiles ?? []).join("|");
 	const filesKey = Object.keys(sandpack.files ?? {}).join("|");
+	const isRuntime = global.runtime !== undefined;
 
 	useEffect(() => {
 		if (!global.hasBeenCorrectlyLoaded) return;
-		const allPaths = Object.keys(sandpack.files ?? {});
+		const files = sandpack.files ?? {};
+		// A runtime block never saves Sandpack's /package.json.
+		const allPaths = Object.keys(isRuntime ? withoutPackageJson(files) : files);
 		const visible = new Set(sandpack.visibleFiles ?? []);
 		const hidden = allPaths.filter((p) => !visible.has(p));
 
@@ -85,6 +114,7 @@ function useHiddenFilesStorage(
 		global.hasBeenCorrectlyLoaded,
 		visibleFilesKey,
 		filesKey,
+		isRuntime,
 		sandpack,
 		saveItem,
 	]);

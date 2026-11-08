@@ -24,6 +24,7 @@ import {
 	parseSidecarBasename,
 } from "sidecarCleanup";
 import { ConfirmModal } from "ConfirmModal";
+import { RuntimeRunners } from "CodePlaygroundBlock/Runtime/WorkerRunner";
 import {
 	ID_SCAN_DEBOUNCE_MS,
 	FENCE_NAMES,
@@ -33,6 +34,8 @@ import {
 export default class CodePlayground extends Plugin {
 	settings!: CodePlaygroundSettings;
 	sidecarStore!: SidecarStore;
+	/** One worker per runtime (e.g. Pyodide) for all its blocks. */
+	private runtimes = new RuntimeRunners();
 	private roots = new Map<HTMLElement, Root>();
 	private blockConfigs = new Map<HTMLElement, unknown>();
 
@@ -131,6 +134,7 @@ export default class CodePlayground extends Plugin {
 					config={mergedConfig}
 					app={this.app}
 					store={this.sidecarStore}
+					runtimes={this.runtimes}
 				/>,
 			);
 		} else {
@@ -219,6 +223,7 @@ export default class CodePlayground extends Plugin {
 		this.roots.forEach((root) => root.unmount());
 		this.roots.clear();
 		this.blockConfigs.clear();
+		this.runtimes.dispose();
 	}
 
 	async loadSettings() {

@@ -258,6 +258,60 @@ div.sp-tab-container {
     inset: 0;
 }
 
+/* Runtime (e.g. Python) output pane, in place of the preview. As for the
+   console, the output fills the pane out of the flow: the block sizes the
+   pane, and long output scrolls inside it instead of growing the
+   editor/output row. The toolbar stays at the top while it scrolls. */
+.cp-runtime-pane {
+    position: relative;
+    background: var(--sp-colors-surface1);
+    color: var(--sp-colors-base);
+}
+
+.cp-runtime-scroll {
+    position: absolute;
+    inset: 0;
+    overflow: auto;
+}
+
+.cp-runtime-toolbar {
+    position: sticky;
+    top: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    background: var(--sp-colors-surface2);
+    border-bottom: 1px solid var(--sp-colors-surface3);
+    font-size: var(--font-ui-smaller);
+}
+
+.cp-runtime-status {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--sp-colors-clickable);
+}
+
+/* A div with the layout of a pre: Obsidian styles `.markdown-rendered pre`
+   (reading view), which would beat a single class. The line height is set
+   here, so the note's text style does not change it. */
+.cp-runtime-output {
+    margin: 0;
+    padding: 8px;
+    font-family: var(--sp-font-mono, var(--font-monospace));
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.cp-runtime-stderr {
+    color: var(--sp-colors-error);
+}
+
 /* Positioning context for the absolutely-placed "Manage files" button. Also
    passes the editor box height down so the editor can fill it. */
 .cp-editor-wrap {

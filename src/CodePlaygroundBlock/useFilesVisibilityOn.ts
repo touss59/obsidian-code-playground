@@ -2,7 +2,11 @@ import { useSandpack } from "@codesandbox/sandpack-react";
 import { useRef, useEffect } from "react";
 import { useStorage } from "CodePlaygroundBlock/useStorage";
 
-export function useFilesVisibilityOn() {
+/**
+ * `promoteTemplateFiles` is false for runtime blocks: their starter files are
+ * all visible already, and /package.json must stay hidden.
+ */
+export function useFilesVisibilityOn(promoteTemplateFiles = true) {
 	const { sandpack } = useSandpack();
 	const filesStorage = useStorage("files");
 	const hiddenStorage = useStorage("hiddenFiles");
@@ -21,7 +25,7 @@ export function useFilesVisibilityOn() {
 		// the user-supplied files prop is empty. Promote them to tabs by
 		// calling openFile per path. openFile sets activeFile as a side
 		// effect, so restore the original at the end.
-		if (!savedCodeRef.current) {
+		if (promoteTemplateFiles && !savedCodeRef.current) {
 			for (const path of Object.keys(sandpack.files)) {
 				sandpack.openFile(path);
 			}
@@ -36,5 +40,5 @@ export function useFilesVisibilityOn() {
 		}
 
 		if (originalActiveFile) sandpack.setActiveFile(originalActiveFile);
-	}, [sandpack]);
+	}, [sandpack, promoteTemplateFiles]);
 }

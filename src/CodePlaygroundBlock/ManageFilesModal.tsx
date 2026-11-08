@@ -5,6 +5,7 @@ import { Notice } from "obsidian";
 import { useAppContext } from "CodePlaygroundBlock/AppContextProvider";
 import { useObsidianModal } from "CodePlaygroundBlock/useObsidianModal";
 import { FILE_EXTENSION_RE, isValidPlaygroundFilePath } from "validators";
+import { withoutPackageJson } from "CodePlaygroundBlock/Runtime/runtimeFiles";
 
 type Props = {
 	open: boolean;
@@ -35,7 +36,9 @@ export function ManageFilesModal({ open, onClose }: Props) {
 
 	if (!modal) return null;
 
-	const allPaths = Object.keys(sandpack.files);
+	const allPaths = Object.keys(
+		global.runtime ? withoutPackageJson(sandpack.files) : sandpack.files,
+	);
 	const visibleSet = new Set(sandpack.visibleFiles);
 
 	const handleCreate = () => {

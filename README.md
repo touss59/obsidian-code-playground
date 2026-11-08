@@ -1,12 +1,14 @@
 # Code Playground
 
-Embed live, editable [Sandpack](https://sandpack.codesandbox.io/) code playgrounds inside your Obsidian notes. Write a fenced block, get a working React (or Vue, Vanilla, Svelte, Angular…) sandbox that runs in-place.
+Embed live, editable [Sandpack](https://sandpack.codesandbox.io/) code playgrounds inside your Obsidian notes. Write a fenced block, get a working React (or Vue, Vanilla, Svelte, Angular…) sandbox that runs in-place. Python blocks run with [Pyodide](https://pyodide.org/).
 
 ![Demo](https://raw.githubusercontent.com/touss59/obsidian-code-playground/main/docs/demoPlugin.gif)
 
 ## ⚠️ Network use & privacy — please read
 
-This plugin relies on [Sandpack](https://sandpack.codesandbox.io/), which uses **CodeSandbox's hosted services**. Before you use it, understand what leaves your machine:
+This plugin relies on [Sandpack](https://sandpack.codesandbox.io/), which uses **CodeSandbox's hosted services**. Python blocks use [Pyodide](https://pyodide.org/) from the jsDelivr CDN. Before you use it, understand what leaves your machine.
+
+### Sandpack templates (React, Vue, Vanilla, …)
 
 - **Your playground code is sent to a third party to compile.** To build a live preview, Sandpack sends the code you type in a playground to CodeSandbox's hosted bundler service (`*.codesandbox.io`), which runs in an iframe. npm packages you import are resolved from CodeSandbox's registry / CDN.
 - **The bundler endpoint is configurable.** If you'd rather not send code to CodeSandbox, set a **Self-hosted bundler URL** in the settings tab to point Sandpack at a [self-hosted bundler](https://sandpack.codesandbox.io/docs/guides/hosting-the-bundler) you control. When set, playground code and dependency resolution go to that endpoint instead of `*.codesandbox.io`.
@@ -14,7 +16,15 @@ This plugin relies on [Sandpack](https://sandpack.codesandbox.io/), which uses *
 - **The "Open in CodeSandbox" button uploads your code.** When `showOpenInCodeSandbox` is enabled and you click it, the block's code is exported to codesandbox.io to open it there. This button is **off by default**.
 - Mobile (iOS / Android) is **supported but experimental** — see [Platform support](#platform-support).
 
-If any of your playground content is sensitive, do not put it in a block, because compiling it will transmit it to CodeSandbox. See [Sandpack's docs](https://sandpack.codesandbox.io/) and [CodeSandbox's privacy policy](https://codesandbox.io/legal/privacy) for details on their handling of submitted code.
+If any of your Sandpack playground content is sensitive, do not put it in a block, because compiling it will transmit it to CodeSandbox. See [Sandpack's docs](https://sandpack.codesandbox.io/) and [CodeSandbox's privacy policy](https://codesandbox.io/legal/privacy) for details on their handling of submitted code.
+
+### Python blocks (`"template": "python"`)
+
+- **Your Python code runs on your machine.** The plugin does not send it to CodeSandbox or to any other service.
+- **Pyodide downloads from a CDN.** The first Python run in a session downloads Pyodide (several MB) from `cdn.jsdelivr.net`. Packages that your code imports, such as `pandas`, download from the same CDN.
+- **`micropip` downloads from PyPI.** If your code calls `micropip.install(...)`, the package downloads from `pypi.org` and `files.pythonhosted.org`.
+- **Your code can make its own requests.** Python code can call any web address, for example with `pyodide.http.pyfetch`. It runs in a sandbox with no access to your vault (see [Python blocks](#python-blocks-experimental)).
+- **A working internet connection is required** for the first Python run of each session.
 
 ## Features
 
@@ -22,6 +32,7 @@ If any of your playground content is sensitive, do not put it in a block, becaus
 - Editor with search and replace, code folding, multiple cursors, autocomplete, and Prettier formatting with `.prettierrc` support.
 - Full-screen mode: a large editor and preview in a modal, with a draggable split.
 - Supports every Sandpack template (`react`, `vanilla`, `vue`, `angular`, `svelte`, …).
+- Python blocks (experimental): Python 3.13 with Pyodide, in a sandboxed worker, with packages such as `pandas` loaded from your imports. See [Python blocks](#python-blocks-experimental).
 - Per-block JSON overrides for template, theme, layout, panel visibility, sizing, colors.
 - Side-by-side or stacked full-width panel layout, set vault-wide or per block.
 - Edits persist to per-block JSON sidecar files in your vault — they sync wherever the vault syncs.
@@ -64,7 +75,7 @@ The block body is JSON. Both `id` and `template` are required — a block missin
 | Field                   | Type                              | Default (from settings) | Notes                                                                                                |
 | ----------------------- | --------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------- |
 | `id`                    | string                            | auto-generated UUID     | Stable identifier used to look up the sidecar. Don't change after creation.                          |
-| `template`              | Sandpack template name            | `"react"`               | Any key from Sandpack's [`SANDBOX_TEMPLATES`](https://sandpack.codesandbox.io/docs/getting-started/usage#templates). |
+| `template`              | Sandpack template name or `"python"` | `"react"`            | Any key from Sandpack's [`SANDBOX_TEMPLATES`](https://sandpack.codesandbox.io/docs/getting-started/usage#templates), or `"python"` (see [Python blocks](#python-blocks-experimental)). |
 | `theme`                 | string                            | `"auto"`                | `"light"`, `"dark"`, `"auto"`, or any named theme from `@codesandbox/sandpack-themes`.                |
 | `layout`                | `"horizontal"` or `"vertical"`    | `"horizontal"`          | `horizontal` puts the editor and preview side by side. `vertical` stacks them so each spans the full note width. See [Panel heights](#panel-heights). |
 | `borderColor`           | hex color (e.g. `"#D3D3D3"`)      | `"#D3D3D3"`             | Border around the playground container.                                                              |
@@ -139,6 +150,60 @@ To set Prettier options, add a `/.prettierrc` or `/.prettierrc.json` file to the
 - On a narrow window the panes stack and the divider is hidden.
 - Close the modal with `Escape`, the close button, or a click outside it. If the search panel or the autocomplete list is open, `Escape` closes it first.
 
+## Python blocks (experimental)
+
+Set `"template": "python"` to run Python in a block:
+
+````markdown
+```code-playground
+{
+  "id": "my-python-block",
+  "template": "python"
+}
+```
+````
+
+A new block starts with a `/main.py` that prints the Python version. Python blocks use [Pyodide](https://pyodide.org/) 0.29.0, which is CPython 3.13 compiled to WebAssembly.
+
+### How a block runs
+
+- A block runs when its note opens, and again 0.5 s after you stop typing. **Run** runs it again.
+- The output pane replaces the preview. It shows stdout, then stderr and errors in red. A traceback starts at your code.
+- The toolbar shows the timings, for example `Pyodide 1840 ms · packages 3 ms · run 12 ms`. `Pyodide … ms` shows only on the run that loaded Pyodide.
+- The output keeps 2000 lines. Later lines are dropped, and the pane shows that the output is truncated.
+- All Python blocks share one Pyodide, and run one at a time. While one block runs, the others show `Waiting for another block...`.
+- **Stop** ends a run at once. It also unloads Pyodide, so the next run loads it again.
+- If you close a block or edit it during a run, the old run goes on in the background, so Pyodide stays loaded. When another block waits, the old run has 2 s to end. After that, it stops.
+
+### Files and packages
+
+- `/main.py` runs. Add other files with **Manage files**. Your code can import other `.py` files, including packages in folders, and open data files such as `/data.csv` by their relative path.
+- Each run starts with fresh globals and a fresh copy of the files. Files that your code writes are not saved.
+- Pyodide loads the packages that your imports name, if Pyodide has them (for example `pandas`, `matplotlib`, `pyyaml`). The first run that needs a package downloads it.
+- For other pure-Python packages from PyPI, use `micropip`. Top-level `await` works:
+
+  ```python
+  import micropip
+  await micropip.install("cowsay")
+  ```
+
+### Sandbox
+
+Python runs in a Web Worker inside a sandboxed iframe (`sandbox="allow-scripts"`). The worker has an opaque origin, with no access to Obsidian, your vault or Node.js. If the worker can still reach Node.js, the block does not run and shows an error.
+
+### Block options
+
+`theme`, `layout`, `borderColor`, the editor heights, `showEditor` and `showFileTabs` work as for Sandpack blocks. `showPreview` or `showConsole` shows the output pane. If both are `false`, the block shows the editor only and never runs. `showOpenInCodeSandbox` has no effect. **Format** does not support `.py` files.
+
+### Limitations
+
+- `input()` raises an error. The output pane has no keyboard input.
+- Python cannot draw into the note. `matplotlib` uses the `Agg` backend, so you can save a figure to bytes, but no plot shows.
+- In Pyodide 0.29.0, `import numpy` on its own can fail. `pandas` and `matplotlib` still load numpy as a dependency.
+- Every Python block runs when its note opens, even blocks that are off screen.
+- A block with an endless loop keeps the other Python blocks waiting until you click **Stop**. It runs again each time its note opens.
+- Python blocks are not tested on mobile yet. Pyodide needs a lot of memory.
+
 ## Per-block overrides
 
 Any field above can be overridden on a single block without touching the plugin settings. Example — a dark-themed React playground with the console enabled and a custom border:
@@ -159,7 +224,7 @@ Plugin defaults apply to every field you don't specify.
 
 ## Supported templates and themes
 
-**Templates** are whatever Sandpack ships in `SANDBOX_TEMPLATES`. Common ones include `react`, `react-ts`, `vanilla`, `vanilla-ts`, `vue`, `angular`, `svelte`, `solid`, `nextjs`, `static`. See the [Sandpack docs](https://sandpack.codesandbox.io/docs/getting-started/usage#templates) for the canonical list.
+**Templates** are whatever Sandpack ships in `SANDBOX_TEMPLATES`. Common ones include `react`, `react-ts`, `vanilla`, `vanilla-ts`, `vue`, `angular`, `svelte`, `solid`, `nextjs`, `static`. See the [Sandpack docs](https://sandpack.codesandbox.io/docs/getting-started/usage#templates) for the canonical list. The plugin adds one template of its own: `python` (see [Python blocks](#python-blocks-experimental)).
 
 **Themes** can be:
 
@@ -172,7 +237,7 @@ The settings tab dropdown lists every value the current bundle supports.
 
 Open **Settings → Code Playground** to set vault-wide defaults:
 
-- **Default template** — the Sandpack template used when a block doesn't set one.
+- **Default template** — the template used when a block doesn't set one: a Sandpack template or `python`.
 - **Default border color** — hex color for the container border.
 - **Default max / min editor height** — pixel bounds for the editor panel.
 - **Default theme** — Sandpack theme name.
@@ -224,11 +289,13 @@ Because the sidecars live in the vault, they sync wherever your vault syncs (Obs
 ## Platform support
 
 - **Desktop (Windows / macOS / Linux):** tested and supported.
-- **Mobile (iOS / Android):** **supported, but experimental.** The plugin runs on Obsidian mobile (`isDesktopOnly: false`), but mobile is not yet thoroughly tested. Because Sandpack runs code in an iframe and pulls its bundler from a CDN, previews depend on the mobile webview and a working connection, and some templates may load slowly or unreliably. If you hit a mobile-specific issue, please open one on the repo.
+- **Mobile (iOS / Android):** **supported, but experimental.** The plugin runs on Obsidian mobile (`isDesktopOnly: false`), but mobile is not yet thoroughly tested. Because Sandpack runs code in an iframe and pulls its bundler from a CDN, previews depend on the mobile webview and a working connection, and some templates may load slowly or unreliably. Python blocks are not tested on mobile yet. If you hit a mobile-specific issue, please open one on the repo.
 
 ## Known limitations
 
 - Sandpack downloads its bundler from a CDN on first run, so a working internet connection is needed for new blocks. Once cached, the same template usually loads offline.
+- Python blocks download Pyodide on the first run of each session, so they also need a connection. See [Python blocks](#python-blocks-experimental) for their own limitations.
+- Edits made less than 1 s before you close a note can be lost. Wait a moment after your last edit.
 - Sidecar cleanup is manual: run **Remove unused sidecar files** after deleting blocks (see [Storage](#storage)). Notes in Obsidian's `.trash` and other non-indexed locations are not scanned, so if you restore such a note you may need to restore its sidecar from the trash too.
 
 ## Building from source

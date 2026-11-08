@@ -6,19 +6,19 @@ import {
 	TextComponent,
 } from "obsidian";
 import CodePlayground from "main";
-import { SandpackPredefinedTemplate } from "@codesandbox/sandpack-react/types";
 import {
 	VALID_TEMPLATES,
 	VALID_LAYOUTS,
 	isPlaygroundLayout,
 	type PlaygroundLayout,
+	type PlaygroundTemplate,
 } from "config";
 import { VALID_THEMES } from "themes";
 import { HEX_COLOR_RE, isHttpUrl, isSafeVaultFolder } from "validators";
 import { DEFAULT_PLAYGROUND_FOLDER } from "appConstants";
 
 export interface CodePlaygroundSettings {
-	template: SandpackPredefinedTemplate;
+	template: PlaygroundTemplate;
 	borderColor: string;
 	maxEditorHeight: number;
 	minEditorHeight: number;
@@ -127,7 +127,7 @@ export class CodePlaygroundSettingTab extends PluginSettingTab {
 							return;
 						}
 						this.plugin.settings.template =
-							value as SandpackPredefinedTemplate;
+							value as PlaygroundTemplate;
 						void this.plugin.saveSettings();
 					},
 				);

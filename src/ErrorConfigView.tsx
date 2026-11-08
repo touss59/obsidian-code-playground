@@ -7,7 +7,7 @@ const errorMessages: Record<KnownConfigError, string> = {
 	invalid_id:
 		"ID may only contain letters, numbers, hyphens, and underscores (no slashes, spaces, or dots)",
 	missing_template:
-		"Template is required - must be a valid CodeSandbox template (e.g., 'react', 'vanilla', 'vue')",
+		"Template is required - must be a valid CodeSandbox template (e.g., 'react', 'vanilla', 'vue') or a language such as 'python'",
 	invalid_template: "The template value is invalid",
 	invalid_borderColor:
 		"Border color must be a valid hex color (e.g., '#FF0000')",
